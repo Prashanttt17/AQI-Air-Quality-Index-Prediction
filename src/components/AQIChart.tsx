@@ -102,7 +102,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
         <CardTitle>AQI Forecast Chart</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[350px]">
+        <div className="h-[300px]">
           <ChartContainer
             config={{
               historical: { color: "#93c5fd" }, // Lighter blue for historical
@@ -115,75 +115,75 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   <p className="text-muted-foreground">No data to display. Please select a city and load data.</p>
                 </div>
               ) : (
-                <LineChart
-                  width={700}
-                  height={350}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis 
-                    dataKey="date" 
-                    interval="preserveStartEnd"
-                    minTickGap={30}
-                    allowDuplicatedCategory={false}
-                  />
-                  <YAxis 
-                    domain={[0, yAxisMax]} 
-                    label={{ value: 'AQI Value', angle: -90, position: 'insideLeft' }}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  
-                  {/* Reference lines for AQI thresholds */}
-                  {thresholds.map(threshold => (
-                    <ReferenceLine 
-                      key={threshold.value}
-                      y={threshold.value} 
-                      stroke={threshold.color} 
-                      strokeDasharray="3 3"
-                      label={{ 
-                        value: threshold.label, 
-                        position: 'right', 
-                        fill: threshold.color,
-                        fontSize: 10
-                      }}
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="date" 
+                      interval="preserveStartEnd"
+                      minTickGap={30}
+                      allowDuplicatedCategory={false}
                     />
-                  ))}
-                  
-                  {/* Historical data line rendered first (in background) */}
-                  {historicalData.length > 0 && (
-                    <Line
-                      data={historicalData}
-                      type="monotone"
-                      dataKey="aqi"
-                      name="Historical AQI"
-                      stroke="var(--color-historical)"
-                      strokeWidth={2}
-                      strokeOpacity={0.6}
-                      dot={{ r: 2, strokeWidth: 1 }}
-                      activeDot={{ r: 5 }}
-                      isAnimationActive={true}
-                      connectNulls={true}
+                    <YAxis 
+                      domain={[0, yAxisMax]} 
+                      label={{ value: 'AQI Value', angle: -90, position: 'insideLeft' }}
                     />
-                  )}
-                  
-                  {/* Predicted data line rendered on top (more prominent) */}
-                  {predictedData.length > 0 && (
-                    <Line
-                      data={predictedData}
-                      type="monotone"
-                      dataKey="aqi"
-                      name="Predicted AQI"
-                      stroke="var(--color-predicted)"
-                      strokeWidth={3}
-                      strokeDasharray="4 0"
-                      dot={{ r: 3, strokeWidth: 2 }}
-                      activeDot={{ r: 6 }}
-                      isAnimationActive={true}
-                      connectNulls={true}
-                    />
-                  )}
-                </LineChart>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    
+                    {/* Reference lines for AQI thresholds */}
+                    {thresholds.map(threshold => (
+                      <ReferenceLine 
+                        key={threshold.value}
+                        y={threshold.value} 
+                        stroke={threshold.color} 
+                        strokeDasharray="3 3"
+                        label={{ 
+                          value: threshold.label, 
+                          position: 'right', 
+                          fill: threshold.color,
+                          fontSize: 10
+                        }}
+                      />
+                    ))}
+                    
+                    {/* Historical data line rendered first (in background) */}
+                    {historicalData.length > 0 && (
+                      <Line
+                        data={historicalData}
+                        type="monotone"
+                        dataKey="aqi"
+                        name="Historical AQI"
+                        stroke="var(--color-historical)"
+                        strokeWidth={2}
+                        strokeOpacity={0.6}
+                        dot={{ r: 2, strokeWidth: 1 }}
+                        activeDot={{ r: 5 }}
+                        isAnimationActive={true}
+                        connectNulls={true}
+                      />
+                    )}
+                    
+                    {/* Predicted data line rendered on top (more prominent) */}
+                    {predictedData.length > 0 && (
+                      <Line
+                        data={predictedData}
+                        type="monotone"
+                        dataKey="aqi"
+                        name="Predicted AQI"
+                        stroke="var(--color-predicted)"
+                        strokeWidth={3}
+                        strokeDasharray="4 0"
+                        dot={{ r: 3, strokeWidth: 2 }}
+                        activeDot={{ r: 6 }}
+                        isAnimationActive={true}
+                        connectNulls={true}
+                      />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
               )}
             </div>
           </ChartContainer>
