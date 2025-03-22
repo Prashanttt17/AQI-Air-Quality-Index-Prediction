@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
@@ -48,8 +47,6 @@ const Index = () => {
       });
     }
   }, []);
-  
-  // Removed the automatic data loading on initial render
   
   // Handle city selection
   const handleCityChange = (city: string) => {
@@ -170,7 +167,7 @@ const Index = () => {
   }, [rawData, predictions, selectedCity]);
   
   // Check if data is loaded and city is selected
-  const isDataReady = dataLoaded && selectedCity !== "Select City" && chartData.length > 0;
+  const isDataReady = dataLoaded && selectedCity !== "Select City";
   
   return (
     <div className="min-h-screen bg-background">
@@ -229,6 +226,22 @@ const Index = () => {
               </div>
             </div>
             
+            {/* Model Selector and Chart - Show all the time */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <ModelSelector
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                className="md:col-span-1"
+              />
+              
+              {/* Always show the chart component, it will be empty if no data is loaded */}
+              <AQIChart 
+                data={chartData}
+                className="md:col-span-3"
+              />
+            </div>
+            
+            {/* Add instruction card when no data is loaded */}
             {!isDataReady && (
               <Card className="p-8 text-center">
                 <CardContent>
@@ -240,22 +253,6 @@ const Index = () => {
                   </p>
                 </CardContent>
               </Card>
-            )}
-            
-            {/* AQI Chart and Model Selector - Only show when data is available */}
-            {isDataReady && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <ModelSelector
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
-                  className="md:col-span-1"
-                />
-                
-                <AQIChart 
-                  data={chartData}
-                  className="md:col-span-3"
-                />
-              </div>
             )}
             
             {/* Weekly Prediction Table - Only show when predictions are available */}
