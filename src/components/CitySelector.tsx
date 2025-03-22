@@ -42,8 +42,9 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   // Combine provided cities with the standard list of Indian cities
   // Remove duplicates and sort alphabetically
   const allCities = React.useMemo(() => {
-    const citySet = new Set(["Select City",...cities, ...INDIAN_CITIES]);
-    return Array.from(citySet).sort();
+    // Create a set with a placeholder value first, followed by sorted cities
+    const citySet = new Set([...cities, ...INDIAN_CITIES]);
+    return ["Select City", ...Array.from(citySet).sort()];
   }, [cities]);
 
   return (

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
@@ -27,9 +28,10 @@ const Index = () => {
   const [selectedModel, setSelectedModel] = useState<string>('ARIMA');
   const [predictions, setPredictions] = useState<AQIDataPoint[]>([]);
   const [cities, setCities] = useState<string[]>([]);
-  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>("Select City");
   const [selectedTab, setSelectedTab] = useState<string>('dashboard');
   const [isPollutantsOpen, setIsPollutantsOpen] = useState<boolean>(false);
+  const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   
   // Current, tomorrow, and weekly average AQI values
   const [currentAQI, setCurrentAQI] = useState<number>(0);
@@ -47,16 +49,22 @@ const Index = () => {
     }
   }, []);
   
-  // Load sample data on initial render
-  useEffect(() => {
-    const sampleData = generateSampleData();
-    handleDataLoaded(sampleData);
+  // Removed the automatic data loading on initial render
+  
+  // Handle city selection
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
     
-    toast({
-      title: "Sample Data Loaded",
-      description: "Using sample AQI data. Use the Data tab to load real data.",
-    });
-  }, []);
+    // Reset data if "Select City" is chosen
+    if (city === "Select City") {
+      setRawData([]);
+      setPredictions([]);
+      setCurrentAQI(0);
+      setTomorrowAQI(0);
+      setWeeklyAvgAQI(0);
+      setDataLoaded(false);
+    }
+  };
   
   // Handle data loading (from API, file upload, or sample)
   const handleDataLoaded = (data: AQIDataPoint[]) => {
@@ -89,20 +97,23 @@ const Index = () => {
     }
     
     setRawData(validData);
+    setDataLoaded(true);
     
     // Extract unique cities
     const uniqueCities = [...new Set(validData.map(item => item.city))];
     setCities(uniqueCities);
-    
-    // Set first city as selected by default
-    if (uniqueCities.length > 0) {
-      setSelectedCity(uniqueCities[0]);
-    }
   };
   
   // Update predictions when model, city, or data changes
   useEffect(() => {
-    if (rawData.length === 0 || !selectedCity) return;
+    if (rawData.length === 0 || !selectedCity || selectedCity === "Select City") {
+      // Reset predictions if no data or no city selected
+      setPredictions([]);
+      setCurrentAQI(0);
+      setTomorrowAQI(0);
+      setWeeklyAvgAQI(0);
+      return;
+    }
     
     // Filter data for selected city
     const cityData = rawData.filter(item => item.city === selectedCity);
@@ -135,7 +146,7 @@ const Index = () => {
   
   // Prepare chart data by combining historical and prediction data
   const chartData = React.useMemo(() => {
-    if (rawData.length === 0 || !selectedCity) return [];
+    if (rawData.length === 0 || !selectedCity || selectedCity === "Select City") return [];
     
     // Filter and sort historical data for the selected city
     const cityData = rawData
@@ -157,6 +168,9 @@ const Index = () => {
     // Combine with predictions
     return [...recentData, ...predictions];
   }, [rawData, predictions, selectedCity]);
+  
+  // Check if data is loaded and city is selected
+  const isDataReady = dataLoaded && selectedCity !== "Select City" && chartData.length > 0;
   
   return (
     <div className="min-h-screen bg-background">
@@ -191,7 +205,7 @@ const Index = () => {
                 <CitySelector
                   cities={cities}
                   selectedCity={selectedCity}
-                  onCityChange={setSelectedCity}
+                  onCityChange={handleCityChange}
                   className="md:col-span-1"
                 />
               </ScrollArea>
@@ -200,7 +214,7 @@ const Index = () => {
                 <AQIInfoCard 
                   title="Current AQI"
                   value={currentAQI}
-                  subtitle="Latest recorded value"
+                  subtitle={selectedCity !== "Select City" ? `Latest recorded value for ${selectedCity}` : "Select a city to view data"}
                 />
                 <AQIInfoCard 
                   title="Tomorrow"
@@ -215,28 +229,43 @@ const Index = () => {
               </div>
             </div>
             
-            {/* AQI Chart and Model Selector */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <ModelSelector
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-                className="md:col-span-1"
-              />
-              
-              <AQIChart 
-                data={chartData}
-                className="md:col-span-3"
-              />
-            </div>
+            {!isDataReady && (
+              <Card className="p-8 text-center">
+                <CardContent>
+                  <h3 className="text-xl font-medium mb-2">No Data Available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {selectedCity === "Select City" 
+                      ? "Please select a city from the dropdown above." 
+                      : "Please load data for the selected city from the Data Management tab."}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
             
-            {/* Weekly Prediction Table */}
+            {/* AQI Chart and Model Selector - Only show when data is available */}
+            {isDataReady && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
+                  className="md:col-span-1"
+                />
+                
+                <AQIChart 
+                  data={chartData}
+                  className="md:col-span-3"
+                />
+              </div>
+            )}
+            
+            {/* Weekly Prediction Table - Only show when predictions are available */}
             {predictions.length > 0 && (
               <WeeklyPredictionTable
                 predictions={predictions}
               />
             )}
             
-            {/* Pollutants Information */}
+            {/* Pollutants Information - Only show when predictions with pollutants are available */}
             {predictions.length > 0 && predictions[0].pollutants && (
               <Collapsible
                 open={isPollutantsOpen}
@@ -262,7 +291,11 @@ const Index = () => {
           <TabsContent value="data" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-6">
-                <ApiDataFetcher onDataLoaded={handleDataLoaded} />
+                <ApiDataFetcher 
+                  onDataLoaded={handleDataLoaded} 
+                  selectedCity={selectedCity}
+                  disabled={selectedCity === "Select City"}
+                />
                 <FileUpload onDataLoaded={handleDataLoaded} />
               </div>
               
@@ -276,6 +309,9 @@ const Index = () => {
                 <CardContent className="space-y-4">
                   <div className="rounded-md bg-muted p-4">
                     <div className="space-y-2">
+                      <p className="text-sm">
+                        <span className="font-medium">Selected City:</span> {selectedCity}
+                      </p>
                       <p className="text-sm">
                         <span className="font-medium">Total Records:</span> {rawData.length}
                       </p>

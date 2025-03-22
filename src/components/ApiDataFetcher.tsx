@@ -11,23 +11,41 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ApiDataFetcherProps {
   onDataLoaded: (data: AQIDataPoint[]) => void;
+  selectedCity: string;
+  disabled?: boolean;
 }
 
-const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded }) => {
+const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ 
+  onDataLoaded, 
+  selectedCity,
+  disabled = false 
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dataSource, setDataSource] = useState<'api' | 'sample'>('api');
   const apiUrl = getApiUrl();
   
   const handleFetchData = async () => {
+    // If no city is selected or it's "Select City", show a toast and return
+    if (!selectedCity || selectedCity === "Select City") {
+      toast({
+        title: "No City Selected",
+        description: "Please select a city before fetching data.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
       let data: AQIDataPoint[];
       
       if (dataSource === 'api') {
-        data = await AQIDataService.fetchAQIData();
+        // Pass the selected city to the API service
+        data = await AQIDataService.fetchAQIData(selectedCity);
       } else {
-        data = generateSampleData();
+        // Generate sample data for the selected city
+        data = generateSampleData(selectedCity);
       }
       
       if (data.length === 0) {
@@ -44,20 +62,20 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded }) => {
       
       toast({
         title: "Success",
-        description: `Loaded ${data.length} data points from ${dataSource === 'api' ? 'API' : 'sample data'}.`,
+        description: `Loaded ${data.length} data points for ${selectedCity} from ${dataSource === 'api' ? 'API' : 'sample data'}.`,
       });
     } catch (error) {
       console.error("Error fetching data:", error);
       
       // If API fails, use sample data as fallback
       if (dataSource === 'api') {
-        const sampleData = generateSampleData();
+        const sampleData = generateSampleData(selectedCity);
             
         onDataLoaded(sampleData);
         
         toast({
           title: "API Error - Using Sample Data",
-          description: "Failed to fetch from API. Using sample data instead.",
+          description: `Failed to fetch from API for ${selectedCity}. Using sample data instead.`,
           variant: "destructive"
         });
       } else {
@@ -123,7 +141,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded }) => {
       <CardFooter>
         <Button 
           onClick={handleFetchData}
-          disabled={isLoading}
+          disabled={isLoading || disabled || !selectedCity || selectedCity === "Select City"}
           className="w-full"
         >
           {isLoading ? (
@@ -134,7 +152,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded }) => {
           ) : (
             <>
               <DownloadCloud className="h-4 w-4 mr-2" />
-              Load {dataSource === 'api' ? 'API' : 'Sample'} Data
+              Load {dataSource === 'api' ? 'API' : 'Sample'} Data for {selectedCity !== "Select City" ? selectedCity : "Selected City"}
             </>
           )}
         </Button>

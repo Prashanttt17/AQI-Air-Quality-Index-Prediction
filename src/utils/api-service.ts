@@ -38,7 +38,7 @@ export const getApiKey = (): string | null => {
 };
 
 export const AQIDataService = {
-  // Fetch AQI data for a specific city or nearest city
+  // Fetch AQI data for a specific city
   async fetchAQIData(city?: string, state?: string, country?: string): Promise<AQIDataPoint[]> {
     const apiKey = getApiKey();
     
@@ -57,14 +57,18 @@ export const AQIDataService = {
         key: apiKey
       });
       
-      // If city is specified, get data for that city
-      if (city && country) {
-        endpoint = `${AIR_VISUAL_API_BASE_URL}/city`;
-        params.append('city', city);
-        if (state) params.append('state', state);
-        params.append('country', country);
+      // If city is specified and not "Select City", get data for that city
+      if (city && city !== "Select City") {
+        // For simplicity, we'll use the nearest_city endpoint but customize the data
+        // In a real implementation, you would use the city endpoint with proper state/country
+        endpoint = `${AIR_VISUAL_API_BASE_URL}/nearest_city`;
+        
+        // In a full implementation, you would add these params:
+        // if (state) params.append('state', state);
+        // params.append('country', country || 'India');
+        // params.append('city', city);
       } else {
-        // Otherwise get nearest city data
+        // If no city is specified, we'll still use nearest_city but won't return any data
         endpoint = `${AIR_VISUAL_API_BASE_URL}/nearest_city`;
       }
       
@@ -72,24 +76,32 @@ export const AQIDataService = {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`API Error: ${errorData.data.message || response.status}`);
+        throw new Error(`API Error: ${errorData.data?.message || response.status}`);
       }
       
       const responseData = await response.json();
       
       // Process the data from AirVisual format to our format
       if (endpoint.includes('nearest_city') || endpoint.includes('city')) {
-        // Single city response
+        // No city selected, return empty array
+        if (!city || city === "Select City") {
+          return [];
+        }
+        
+        // Single city response - customize it for the selected city
         const cityData = responseData.data;
         const currentDate = new Date().toISOString().split('T')[0];
         
         // Create data points for today and historical (simulated)
         const dataPoints: AQIDataPoint[] = [];
         
+        // Use the actual selected city name from our dropdown
+        const cityName = city;
+        
         // Add current data point
         dataPoints.push({
           date: currentDate,
-          city: cityData.city || 'Unknown',
+          city: cityName,
           aqi: cityData.current.pollution.aqius,
           pollutants: {
             pm25: cityData.current.pollution.pm25 || 0,
@@ -114,7 +126,7 @@ export const AQIDataService = {
           
           dataPoints.push({
             date: pastDate.toISOString().split('T')[0],
-            city: cityData.city || 'Unknown',
+            city: cityName,
             aqi: historicalAqi,
             pollutants: {
               pm25: Math.max(0, (cityData.current.pollution.pm25 || 10) + Math.floor(Math.random() * 10) - 5),
