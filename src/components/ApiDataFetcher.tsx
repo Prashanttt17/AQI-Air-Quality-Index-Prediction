@@ -45,7 +45,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
         data = await AQIDataService.fetchAQIData(selectedCity);
       } else {
         // Generate sample data for the selected city
-        data = generateSampleData(selectedCity);
+        data = generateSampleData();
       }
       
       if (data.length === 0) {
@@ -69,7 +69,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
       
       // If API fails, use sample data as fallback
       if (dataSource === 'api') {
-        const sampleData = generateSampleData(selectedCity);
+        const sampleData = generateSampleData();
             
         onDataLoaded(sampleData);
         
