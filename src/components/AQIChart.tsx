@@ -105,11 +105,11 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
   
   return (
     <Card className={className}>
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle>AQI Forecast Chart</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
+      <CardContent className="p-3">
+        <div className="h-[280px]">
           <ChartContainer
             config={{
               historical: { color: "#93c5fd" }, // Lighter blue for historical
@@ -119,7 +119,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
             <div className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
-                  margin={{ top: 5, right: 120, left: 20, bottom: 5 }}
+                  margin={{ top: 5, right: 140, left: 20, bottom: 20 }}
                   data={showPlaceholder ? placeholderData : undefined}
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -128,13 +128,14 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     interval="preserveStartEnd"
                     minTickGap={30}
                     allowDuplicatedCategory={false}
+                    padding={{ left: 10, right: 10 }}
                   />
                   <YAxis 
                     domain={[0, yAxisMax]} 
                     label={{ value: 'AQI Value', angle: -90, position: 'insideLeft' }}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Legend wrapperStyle={{ marginBottom: '10px' }} />
                   
                   {/* Reference lines for AQI thresholds - with wider right margin for labels */}
                   {thresholds.map(threshold => (
