@@ -105,11 +105,11 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
   
   return (
     <Card className={className}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1">
         <CardTitle>AQI Forecast Chart</CardTitle>
       </CardHeader>
-      <CardContent className="p-2">
-        <div className="h-[320px]">
+      <CardContent className="p-0">
+        <div className="h-[380px] w-full">
           <ChartContainer
             config={{
               historical: { color: "#93c5fd" }, // Lighter blue for historical
@@ -118,7 +118,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                margin={{ top: 10, right: 140, left: 20, bottom: 20 }}
+                margin={{ top: 20, right: 160, left: 20, bottom: 40 }}
                 data={showPlaceholder ? placeholderData : undefined}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -128,13 +128,28 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   minTickGap={30}
                   allowDuplicatedCategory={false}
                   padding={{ left: 10, right: 10 }}
+                  tick={{ fontSize: 12 }}
                 />
                 <YAxis 
                   domain={[0, yAxisMax]} 
-                  label={{ value: 'AQI Value', angle: -90, position: 'insideLeft' }}
+                  label={{ 
+                    value: 'AQI Value', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { textAnchor: 'middle' },
+                    offset: 0,
+                    fontSize: 12
+                  }}
+                  tick={{ fontSize: 12 }}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ marginBottom: '10px' }} />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '15px' }} 
+                  verticalAlign="bottom" 
+                  height={36}
+                  iconSize={10}
+                  fontSize={12}
+                />
                 
                 {/* Reference lines for AQI thresholds - with wider right margin for labels */}
                 {thresholds.map(threshold => (
@@ -161,6 +176,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     textAnchor="middle" 
                     dominantBaseline="middle" 
                     className="fill-muted-foreground"
+                    fontSize={14}
                   >
                     No data to display. Please select a city and load data.
                   </text>

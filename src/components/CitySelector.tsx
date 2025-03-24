@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // List of major Indian cities for the dropdown (removed foreign cities)
 const INDIAN_CITIES = [
-  "New Delhi", "Mumbai", "Kolkata", "Chennai", "Bangalore", 
+  "Delhi", "Mumbai", "Kolkata", "Chennai", "Bangalore", 
   "Hyderabad", "Ahmedabad", "Pune", "Jaipur", "Lucknow",
   "Kanpur", "Nagpur", "Indore", "Thane", "Bhopal",
   "Visakhapatnam", "Patna", "Vadodara", "Ghaziabad", "Ludhiana",
