@@ -93,6 +93,40 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     { date: "Jan 31", aqi: 0 }
   ] : [];
   
+  // Custom render function for the left side (numeric values)
+  const renderLeftLabel = (props: any) => {
+    const { x, y, width, height, value, fill } = props;
+    return (
+      <text 
+        x={x - 5} 
+        y={y} 
+        fill={fill} 
+        fontSize={12} 
+        textAnchor="end" 
+        dominantBaseline="middle"
+      >
+        {value}
+      </text>
+    );
+  };
+  
+  // Custom render function for the right side (text labels)
+  const renderRightLabel = (props: any) => {
+    const { x, y, width, height, value, fill } = props;
+    return (
+      <text 
+        x={x + 10} 
+        y={y} 
+        fill={fill} 
+        fontSize={12} 
+        textAnchor="start" 
+        dominantBaseline="middle"
+      >
+        {value}
+      </text>
+    );
+  };
+  
   return (
     <Card className={className}>
       <CardHeader className="pb-1">
@@ -142,30 +176,40 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                 />
                 
                 {thresholds.map(threshold => (
-                  <ReferenceLine 
-                    key={threshold.value}
-                    y={threshold.value} 
-                    stroke={threshold.color} 
-                    strokeDasharray="3 3"
-                    label={[
-                      // Number label on the left
-                      { 
-                        value: `${threshold.value}`, 
-                        position: 'left', 
+                  <React.Fragment key={threshold.value}>
+                    {/* Main reference line */}
+                    <ReferenceLine 
+                      y={threshold.value} 
+                      stroke={threshold.color} 
+                      strokeDasharray="3 3"
+                    />
+                    {/* Label on the left side (numerical value) */}
+                    <ReferenceLine 
+                      y={threshold.value} 
+                      stroke="transparent"
+                      label={{
+                        value: `${threshold.value}`,
+                        position: 'left',
                         fill: threshold.color,
                         fontSize: 12,
                         offset: 5,
-                      },
-                      // Text label on the right
-                      { 
-                        value: threshold.label, 
-                        position: 'right', 
+                        renderCustomizedLabel: renderLeftLabel
+                      }}
+                    />
+                    {/* Label on the right side (text) */}
+                    <ReferenceLine 
+                      y={threshold.value} 
+                      stroke="transparent"
+                      label={{
+                        value: threshold.label,
+                        position: 'right',
                         fill: threshold.color,
                         fontSize: 12,
                         offset: 10,
-                      }
-                    ]}
-                  />
+                        renderCustomizedLabel: renderRightLabel
+                      }}
+                    />
+                  </React.Fragment>
                 ))}
                 
                 {showPlaceholder && (
