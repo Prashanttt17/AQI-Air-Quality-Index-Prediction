@@ -72,6 +72,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     };
   }) : [];
   
+  // Define the thresholds - removed 90, 180, 350
   const thresholds = [
     { value: 50, label: "Good", color: "#4ade80" },
     { value: 100, label: "Moderate", color: "#facc15" },
@@ -92,40 +93,6 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     { date: "Jan 1", aqi: 0 },
     { date: "Jan 31", aqi: 0 }
   ] : [];
-  
-  // Custom render function for the left side (numeric values)
-  const renderLeftLabel = (props: any) => {
-    const { x, y, width, height, value, fill } = props;
-    return (
-      <text 
-        x={x - 5} 
-        y={y} 
-        fill={fill} 
-        fontSize={12} 
-        textAnchor="end" 
-        dominantBaseline="middle"
-      >
-        {value}
-      </text>
-    );
-  };
-  
-  // Custom render function for the right side (text labels)
-  const renderRightLabel = (props: any) => {
-    const { x, y, width, height, value, fill } = props;
-    return (
-      <text 
-        x={x + 10} 
-        y={y} 
-        fill={fill} 
-        fontSize={12} 
-        textAnchor="start" 
-        dominantBaseline="middle"
-      >
-        {value}
-      </text>
-    );
-  };
   
   return (
     <Card className={className}>
@@ -192,8 +159,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                         position: 'left',
                         fill: threshold.color,
                         fontSize: 12,
-                        offset: 5,
-                        renderCustomizedLabel: renderLeftLabel
+                        offset: 5
                       }}
                     />
                     {/* Label on the right side (text) */}
@@ -205,8 +171,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                         position: 'right',
                         fill: threshold.color,
                         fontSize: 12,
-                        offset: 10,
-                        renderCustomizedLabel: renderRightLabel
+                        offset: 10
                       }}
                     />
                   </React.Fragment>
