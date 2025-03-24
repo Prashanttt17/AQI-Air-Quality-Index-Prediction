@@ -19,7 +19,7 @@ export const getAQILevel = (aqi: number) => {
 
 // Generate sample data for demonstration
 export const generateSampleData = () => {
-  const cities = ["Jaipur", "Mumbai", "Delhi", "Bangalore", "Chennai"];
+  const cities = ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow"];
   const today = new Date();
   const data = [];
 

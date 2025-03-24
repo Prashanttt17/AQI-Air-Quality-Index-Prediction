@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   LineChart,
@@ -107,7 +108,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                margin={{ top: 20, right: 160, left: 20, bottom: 40 }}
+                margin={{ top: 20, right: 160, left: 30, bottom: 40 }}
                 data={showPlaceholder ? placeholderData : undefined}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -146,13 +147,24 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     y={threshold.value} 
                     stroke={threshold.color} 
                     strokeDasharray="3 3"
-                    label={{ 
-                      value: `${threshold.value} - ${threshold.label}`, 
-                      position: 'right', 
-                      fill: threshold.color,
-                      fontSize: 12,
-                      offset: 10,
-                    }}
+                    label={[
+                      // Number label on the left
+                      { 
+                        value: `${threshold.value}`, 
+                        position: 'left', 
+                        fill: threshold.color,
+                        fontSize: 12,
+                        offset: 5,
+                      },
+                      // Text label on the right
+                      { 
+                        value: threshold.label, 
+                        position: 'right', 
+                        fill: threshold.color,
+                        fontSize: 12,
+                        offset: 10,
+                      }
+                    ]}
                   />
                 ))}
                 
