@@ -5,8 +5,8 @@ export const AQI_LEVELS = [
   { level: "Moderate", range: [51, 100], color: "bg-yellow-400", textColor: "text-yellow-500" },
   { level: "Unhealthy for Sensitive Groups", range: [101, 150], color: "bg-orange-400", textColor: "text-orange-500" },
   { level: "Unhealthy", range: [151, 200], color: "bg-red-500", textColor: "text-red-500" },
-  { level: "Very Unhealthy", range: [201, 300], color: "bg-purple-600", textColor: "text-purple-600" },
-  { level: "Hazardous", range: [301, 500], color: "bg-rose-900", textColor: "text-rose-900" },
+  { level: "Very Unhealthy", range: [201, 250], color: "bg-purple-600", textColor: "text-purple-600" },
+  { level: "Hazardous", range: [251, 500], color: "bg-rose-900", textColor: "text-rose-900" },
 ];
 
 // Get AQI level based on AQI value
@@ -19,7 +19,7 @@ export const getAQILevel = (aqi: number) => {
 
 // Generate sample data for demonstration
 export const generateSampleData = () => {
-  const cities = ["Jaipur", "Los Angeles", "Chicago", "Houston", "Phoenix"];
+  const cities = ["Jaipur", "Mumbai", "Delhi", "Bangalore", "Chennai"];
   const today = new Date();
   const data = [];
 
@@ -30,10 +30,10 @@ export const generateSampleData = () => {
       date.setDate(date.getDate() - i);
       
       // Base AQI with some randomness
-      const baseAQI = city === "Los Angeles" ? 85 : 
-                      city === "Phoenix" ? 110 :
-                      city === "Chicago" ? 60 :
-                      city === "Houston" ? 75 : 45;
+      const baseAQI = city === "Delhi" ? 85 : 
+                      city === "Mumbai" ? 110 :
+                      city === "Bangalore" ? 60 :
+                      city === "Chennai" ? 75 : 45;
       
       // Add some seasonal variation
       const seasonalFactor = Math.sin((date.getMonth() + 1) / 12 * Math.PI) * 15;

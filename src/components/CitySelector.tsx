@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// List of major Indian cities for the dropdown
+// List of major Indian cities for the dropdown (removed foreign cities)
 const INDIAN_CITIES = [
   "New Delhi", "Mumbai", "Kolkata", "Chennai", "Bangalore", 
   "Hyderabad", "Ahmedabad", "Pune", "Jaipur", "Lucknow",
@@ -39,12 +39,19 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   onCityChange,
   className
 }) => {
-  // Combine provided cities with the standard list of Indian cities
-  // Remove duplicates and sort alphabetically
-  const allCities = React.useMemo(() => {
-    // Create a set with a placeholder value first, followed by sorted cities
-    const citySet = new Set([...cities, ...INDIAN_CITIES]);
-    return ["Select City", ...Array.from(citySet).sort()];
+  // Filter cities to only include Indian cities from our predefined list
+  const filteredCities = React.useMemo(() => {
+    // Create a set from our INDIAN_CITIES list
+    const indianCitiesSet = new Set(INDIAN_CITIES);
+    
+    // Filter the provided cities to only include those in our Indian cities list
+    const validCities = cities.filter(city => indianCitiesSet.has(city));
+    
+    // Combine with our standard list and remove duplicates
+    const combinedCities = new Set([...validCities, ...INDIAN_CITIES]);
+    
+    // Return sorted array with "Select City" at the beginning
+    return ["Select City", ...Array.from(combinedCities).sort()];
   }, [cities]);
 
   return (
@@ -57,7 +64,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {/* Dropdown select for all cities */}
+          {/* Dropdown select for Indian cities only */}
           <Select 
             value={selectedCity} 
             onValueChange={onCityChange}
@@ -66,7 +73,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
               <SelectValue placeholder="Select city" />
             </SelectTrigger>
             <SelectContent className="max-h-[300px] bg-popover">
-              {allCities.map(city => (
+              {filteredCities.map(city => (
                 <SelectItem key={city} value={city}>
                   {city}
                 </SelectItem>
