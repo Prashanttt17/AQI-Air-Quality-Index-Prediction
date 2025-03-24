@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   LineChart,
@@ -20,7 +19,6 @@ interface AQIChartProps {
   className?: string;
 }
 
-// Custom tooltip to show AQI value and date with dark mode support
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -49,16 +47,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
-  // Format dates for display if needed
   const chartData = data && data.length > 0 ? data.map(item => {
-    // Ensure dates are properly formatted
     let formattedDate = item.date;
     if (formattedDate && typeof formattedDate === 'string') {
-      // Try to ensure the date is in a valid format
       try {
         const dateObj = new Date(formattedDate);
         if (!isNaN(dateObj.getTime())) {
-          // Format for display in chart
           formattedDate = dateObj.toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric' 
@@ -77,27 +71,22 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     };
   }) : [];
   
-  // Define AQI threshold levels for reference lines (using AQI_LEVELS from aqi-utils)
   const thresholds = [
-    { value: 50, label: "Good (50)", color: "#4ade80" },
-    { value: 100, label: "Moderate (100)", color: "#facc15" },
-    { value: 150, label: "Unhealthy for Sensitive Groups (150)", color: "#fb923c" },
-    { value: 200, label: "Unhealthy (200)", color: "#ef4444" },
-    { value: 250, label: "Very Unhealthy (250)", color: "#9333ea" }
+    { value: 50, label: "Good", color: "#4ade80" },
+    { value: 100, label: "Moderate", color: "#facc15" },
+    { value: 150, label: "Unhealthy for Sensitive Groups", color: "#fb923c" },
+    { value: 200, label: "Unhealthy", color: "#ef4444" },
+    { value: 250, label: "Very Unhealthy", color: "#9333ea" }
   ];
   
-  // Find max AQI for setting y-axis domain - default to 300 to show all threshold levels
   const maxAqi = Math.max(...(chartData.length > 0 ? chartData.map(item => item.aqi) : [0]), 300);
   const yAxisMax = Math.min(Math.ceil(maxAqi * 1.1 / 50) * 50, 500);
   
-  // Separate historical and predicted data for better visualization
   const historicalData = chartData.filter(item => !item.predicted);
   const predictedData = chartData.filter(item => item.predicted);
   
-  // Show placeholder chart with reference lines when no data is available
   const showPlaceholder = chartData.length === 0;
   
-  // Create placeholder data for empty chart (just to display reference lines)
   const placeholderData = showPlaceholder ? [
     { date: "Jan 1", aqi: 0 },
     { date: "Jan 31", aqi: 0 }
@@ -112,8 +101,8 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
         <div className="h-[380px] w-full">
           <ChartContainer
             config={{
-              historical: { color: "#93c5fd" }, // Lighter blue for historical
-              predicted: { color: "#f97316" },  // Orange for predictions
+              historical: { color: "#93c5fd" },
+              predicted: { color: "#f97316" },
             }}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -151,7 +140,6 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   fontSize={12}
                 />
                 
-                {/* Reference lines for AQI thresholds - with wider right margin for labels */}
                 {thresholds.map(threshold => (
                   <ReferenceLine 
                     key={threshold.value}
@@ -159,7 +147,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     stroke={threshold.color} 
                     strokeDasharray="3 3"
                     label={{ 
-                      value: threshold.label, 
+                      value: `${threshold.value} - ${threshold.label}`, 
                       position: 'right', 
                       fill: threshold.color,
                       fontSize: 12,
@@ -168,7 +156,6 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   />
                 ))}
                 
-                {/* Show empty state message when no real data */}
                 {showPlaceholder && (
                   <text 
                     x="50%" 
@@ -182,7 +169,6 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   </text>
                 )}
                 
-                {/* Historical data line rendered first (in background) */}
                 {historicalData.length > 0 && (
                   <Line
                     data={historicalData}
@@ -199,7 +185,6 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   />
                 )}
                 
-                {/* Predicted data line rendered on top (more prominent) */}
                 {predictedData.length > 0 && (
                   <Line
                     data={predictedData}
