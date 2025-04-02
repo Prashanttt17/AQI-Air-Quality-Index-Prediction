@@ -1,6 +1,27 @@
 
 import { AQIDataPoint } from './api-service';
 
+// AQI level definitions with color indicators
+export const AQI_LEVELS = [
+  { min: 0, max: 50, level: "Good", color: "bg-green-500", textColor: "text-green-600 dark:text-green-400" },
+  { min: 51, max: 100, level: "Moderate", color: "bg-yellow-500", textColor: "text-yellow-600 dark:text-yellow-400" },
+  { min: 101, max: 150, level: "Unhealthy for Sensitive Groups", color: "bg-orange-500", textColor: "text-orange-600 dark:text-orange-400" },
+  { min: 151, max: 200, level: "Unhealthy", color: "bg-red-500", textColor: "text-red-600 dark:text-red-400" },
+  { min: 201, max: 300, level: "Very Unhealthy", color: "bg-purple-500", textColor: "text-purple-600 dark:text-purple-400" },
+  { min: 301, max: 500, level: "Hazardous", color: "bg-rose-900", textColor: "text-rose-800 dark:text-rose-500" }
+];
+
+// Function to determine AQI level based on numeric value
+export const getAQILevel = (aqi: number) => {
+  for (const level of AQI_LEVELS) {
+    if (aqi >= level.min && aqi <= level.max) {
+      return level;
+    }
+  }
+  // Default for values outside known ranges
+  return AQI_LEVELS[AQI_LEVELS.length - 1];
+};
+
 // Generate sample AQI data for demonstration
 export const generateSampleData = (cityName: string = "Delhi"): AQIDataPoint[] => {
   const data: AQIDataPoint[] = [];
