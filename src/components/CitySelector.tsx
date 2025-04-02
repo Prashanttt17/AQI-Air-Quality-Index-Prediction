@@ -125,15 +125,15 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   }, [selectedState, citiesByState, allCities]);
 
   return (
-    <Card className={`h-full ${className}`}>
-      <CardHeader>
+    <Card className={`h-full flex flex-col ${className}`}>
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="text-lg flex items-center">
           <MapPin className="h-5 w-5 mr-2" /> 
           Location
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="flex-1 overflow-hidden flex flex-col">
+        <div className="space-y-4 flex-1 flex flex-col">
           {/* State selection dropdown */}
           <div>
             <label className="text-sm font-medium mb-1 block text-muted-foreground">
@@ -159,7 +159,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
           </div>
           
           {/* City selection dropdown */}
-          <div>
+          <div className="flex-1">
             <label className="text-sm font-medium mb-1 block text-muted-foreground">
               City
             </label>
