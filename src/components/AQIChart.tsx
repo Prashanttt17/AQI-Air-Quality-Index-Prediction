@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { AQI_LEVELS } from "@/utils/aqi-utils";
+import { AQI_LEVELS, getAQILevel } from "@/utils/aqi-utils";
 
 interface AQIChartProps {
   data: any[];
@@ -72,17 +72,30 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     };
   }) : [];
   
-  // Define the thresholds - removed 90, 180, 350
+  // Define exact thresholds directly from AQI_LEVELS for better alignment
   const thresholds = [
     { value: 50, label: "Good", color: "#4ade80" },
     { value: 100, label: "Moderate", color: "#facc15" },
-    { value: 150, label: "Unhealthy for Sensitive Groups", color: "#fb923c" },
+    { value: 150, label: "Unhealthy for Sensitive Groups", color: "#f97316" },
     { value: 200, label: "Unhealthy", color: "#ef4444" },
-    { value: 250, label: "Very Unhealthy", color: "#9333ea" }
+    { value: 300, label: "Very Unhealthy", color: "#9333ea" },
+    { value: 500, label: "Hazardous", color: "#be123c" }
   ];
   
-  const maxAqi = Math.max(...(chartData.length > 0 ? chartData.map(item => item.aqi) : [0]), 300);
-  const yAxisMax = Math.min(Math.ceil(maxAqi * 1.1 / 50) * 50, 500);
+  // Calculate appropriate Y-axis max that aligns with AQI levels
+  const maxAqi = Math.max(...(chartData.length > 0 ? chartData.map(item => item.aqi) : [0]), 250);
+  
+  // Find next threshold above the max AQI
+  let yAxisMax = 500; // Default to maximum scale
+  for (const threshold of thresholds) {
+    if (threshold.value > maxAqi) {
+      yAxisMax = threshold.value;
+      break;
+    }
+  }
+  
+  // Ensure we always have at least 2 thresholds visible
+  if (yAxisMax <= 100) yAxisMax = 150;
   
   const historicalData = chartData.filter(item => !item.predicted);
   const predictedData = chartData.filter(item => item.predicted);
@@ -94,6 +107,11 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     { date: "Jan 31", aqi: 0 }
   ] : [];
   
+  // Calculate proper tick values based on visible range
+  const tickValues = thresholds
+    .filter(threshold => threshold.value <= yAxisMax)
+    .map(threshold => threshold.value);
+  
   return (
     <Card className={className}>
       <CardHeader className="pb-1">
@@ -103,13 +121,13 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
         <div className="h-[380px] w-full">
           <ChartContainer
             config={{
-              historical: { color: "#93c5fd" },
-              predicted: { color: "#f97316" },
+              historical: { color: "#0EA5E9" }, // Brighter blue for better visibility
+              predicted: { color: "#F97316" }, // Bright orange for predictions
             }}
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                margin={{ top: 20, right: 160, left: 30, bottom: 40 }}
+                margin={{ top: 20, right: 160, left: 35, bottom: 40 }}
                 data={showPlaceholder ? placeholderData : undefined}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -123,6 +141,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                 />
                 <YAxis 
                   domain={[0, yAxisMax]} 
+                  ticks={tickValues}
                   label={{ 
                     value: 'AQI Value', 
                     angle: -90, 
@@ -142,40 +161,34 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   fontSize={12}
                 />
                 
-                {thresholds.map(threshold => (
-                  <React.Fragment key={threshold.value}>
-                    {/* Main reference line */}
-                    <ReferenceLine 
-                      y={threshold.value} 
-                      stroke={threshold.color} 
-                      strokeDasharray="3 3"
-                    />
-                    {/* Label on the left side (numerical value) */}
-                    <ReferenceLine 
-                      y={threshold.value} 
-                      stroke="transparent"
-                      label={{
-                        value: `${threshold.value}`,
-                        position: 'left',
-                        fill: threshold.color,
-                        fontSize: 12,
-                        offset: 5
-                      }}
-                    />
-                    {/* Label on the right side (text) */}
-                    <ReferenceLine 
-                      y={threshold.value} 
-                      stroke="transparent"
-                      label={{
-                        value: threshold.label,
-                        position: 'right',
-                        fill: threshold.color,
-                        fontSize: 12,
-                        offset: 10
-                      }}
-                    />
-                  </React.Fragment>
-                ))}
+                {thresholds.map(threshold => {
+                  // Only show thresholds that are within our current Y axis range
+                  if (threshold.value <= yAxisMax) {
+                    return (
+                      <React.Fragment key={threshold.value}>
+                        {/* Main reference line */}
+                        <ReferenceLine 
+                          y={threshold.value} 
+                          stroke={threshold.color} 
+                          strokeDasharray="3 3"
+                        />
+                        {/* Label on the right side (text) */}
+                        <ReferenceLine 
+                          y={threshold.value} 
+                          stroke="transparent"
+                          label={{
+                            value: threshold.label,
+                            position: 'right',
+                            fill: threshold.color,
+                            fontSize: 12,
+                            offset: 10
+                          }}
+                        />
+                      </React.Fragment>
+                    );
+                  }
+                  return null;
+                })}
                 
                 {showPlaceholder && (
                   <text 
@@ -198,7 +211,6 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     name="Historical AQI"
                     stroke="var(--color-historical)"
                     strokeWidth={2}
-                    strokeOpacity={0.6}
                     dot={{ r: 2, strokeWidth: 1 }}
                     activeDot={{ r: 5 }}
                     isAnimationActive={true}
