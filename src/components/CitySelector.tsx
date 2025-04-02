@@ -125,7 +125,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   }, [selectedState, citiesByState, allCities]);
 
   return (
-    <Card className={className}>
+    <Card className={`h-full ${className}`}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center">
           <MapPin className="h-5 w-5 mr-2" /> 

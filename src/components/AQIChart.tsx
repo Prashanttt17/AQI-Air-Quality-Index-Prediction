@@ -113,7 +113,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     .map(threshold => threshold.value);
   
   return (
-    <Card className={className}>
+    <Card className={`h-full ${className}`}>
       <CardHeader className="pb-1">
         <CardTitle>AQI Forecast Chart</CardTitle>
       </CardHeader>
