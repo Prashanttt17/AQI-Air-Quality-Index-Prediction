@@ -80,6 +80,7 @@ export const AQIDataService = {
       }
       
       const responseData = await response.json();
+      console.log("API Response:", responseData); // Log for debugging
       
       // Process the data from AirVisual format to our format
       if (endpoint.includes('nearest_city') || endpoint.includes('city')) {
@@ -88,17 +89,17 @@ export const AQIDataService = {
           return [];
         }
         
-        // Single city response - customize it for the selected city
+        // Single city response - use the actual data returned by the API
         const cityData = responseData.data;
         const currentDate = new Date().toISOString().split('T')[0];
         
         // Create data points for today and historical (simulated)
         const dataPoints: AQIDataPoint[] = [];
         
-        // Use the actual selected city name from our dropdown
-        const cityName = city;
+        // Use the city name from the API response
+        const cityName = cityData.city || city;
         
-        // Add current data point
+        // Add current data point with actual AQI from the API
         dataPoints.push({
           date: currentDate,
           city: cityName,

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
@@ -19,7 +20,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 import { generateSampleData } from '@/utils/aqi-utils';
 import { generateEnhancedPredictions } from '@/utils/enhanced-predictive-models';
-import { AQIDataPoint, getApiKey } from '@/utils/api-service';
+import { AQIDataPoint, getApiKey, AQIDataService } from '@/utils/api-service';
 
 const Index = () => {
   // State for data management
@@ -49,7 +50,7 @@ const Index = () => {
   }, []);
   
   // Handle city selection
-  const handleCityChange = (city: string) => {
+  const handleCityChange = async (city: string) => {
     setSelectedCity(city);
     
     // Reset data if "Select City" is chosen
@@ -60,6 +61,19 @@ const Index = () => {
       setTomorrowAQI(0);
       setWeeklyAvgAQI(0);
       setDataLoaded(false);
+    } else {
+      // Automatically fetch data for the selected city
+      try {
+        const apiKey = getApiKey();
+        if (apiKey) {
+          const data = await AQIDataService.fetchAQIData(city);
+          if (data && data.length > 0) {
+            handleDataLoaded(data);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data for city:", error);
+      }
     }
   };
   
@@ -418,3 +432,4 @@ const Index = () => {
 };
 
 export default Index;
+
