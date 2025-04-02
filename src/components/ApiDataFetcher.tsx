@@ -22,7 +22,11 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dataSource, setDataSource] = useState<'api' | 'sample'>('api');
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const apiUrl = getApiUrl();
+  
+  // Add throttling to prevent too many API requests
+  const THROTTLE_TIME = 10000; // 10 seconds between API calls
   
   const handleFetchData = async () => {
     // If no city is selected or it's "Select City", show a toast and return
@@ -35,17 +39,32 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
       return;
     }
     
+    // Check if we're trying to fetch too soon (throttle API calls)
+    const currentTime = Date.now();
+    if (dataSource === 'api' && currentTime - lastFetchTime < THROTTLE_TIME) {
+      const waitTimeRemaining = Math.ceil((THROTTLE_TIME - (currentTime - lastFetchTime)) / 1000);
+      toast({
+        title: "Too Many Requests",
+        description: `Please wait ${waitTimeRemaining} seconds before making another API request.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
       let data: AQIDataPoint[];
       
       if (dataSource === 'api') {
+        // Update last fetch time
+        setLastFetchTime(currentTime);
+        
         // Pass the selected city to the API service
         data = await AQIDataService.fetchAQIData(selectedCity);
       } else {
         // Generate sample data for the selected city
-        data = generateSampleData();
+        data = generateSampleData(selectedCity);
       }
       
       if (data.length === 0) {
@@ -69,7 +88,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
       
       // If API fails, use sample data as fallback
       if (dataSource === 'api') {
-        const sampleData = generateSampleData();
+        const sampleData = generateSampleData(selectedCity);
             
         onDataLoaded(sampleData);
         
@@ -130,6 +149,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
           {dataSource === 'api' ? (
             <p className="text-xs text-muted-foreground">
               Fetches real-time and historical AQI data from the API. Requires a valid API key to be set.
+              Rate limited to one request every 10 seconds to avoid API throttling.
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">

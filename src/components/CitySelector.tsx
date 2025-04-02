@@ -39,16 +39,10 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   onCityChange,
   className
 }) => {
-  // Filter cities to only include Indian cities from our predefined list
-  const filteredCities = React.useMemo(() => {
-    // Create a set from our INDIAN_CITIES list
-    const indianCitiesSet = new Set(INDIAN_CITIES);
-    
-    // Filter the provided cities to only include those in our Indian cities list
-    const validCities = cities.filter(city => indianCitiesSet.has(city));
-    
-    // Combine with our standard list and remove duplicates
-    const combinedCities = new Set([...validCities, ...INDIAN_CITIES]);
+  // Combine both predefined cities and API-provided cities
+  const allCities = React.useMemo(() => {
+    // Create a set from our INDIAN_CITIES list and API-provided cities
+    const combinedCities = new Set([...INDIAN_CITIES, ...cities]);
     
     // Return sorted array with "Select City" at the beginning
     return ["Select City", ...Array.from(combinedCities).sort()];
@@ -64,7 +58,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {/* Dropdown select for Indian cities only */}
+          {/* Dropdown select for cities */}
           <Select 
             value={selectedCity} 
             onValueChange={onCityChange}
@@ -73,7 +67,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
               <SelectValue placeholder="Select city" />
             </SelectTrigger>
             <SelectContent className="max-h-[300px] bg-popover">
-              {filteredCities.map(city => (
+              {allCities.map(city => (
                 <SelectItem key={city} value={city}>
                   {city}
                 </SelectItem>

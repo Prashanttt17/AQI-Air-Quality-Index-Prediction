@@ -1,68 +1,68 @@
 
-// AQI severity levels and colors
-export const AQI_LEVELS = [
-  { level: "Good", range: [0, 50], color: "bg-green-500", textColor: "text-green-500" },
-  { level: "Moderate", range: [51, 100], color: "bg-yellow-400", textColor: "text-yellow-500" },
-  { level: "Unhealthy for Sensitive Groups", range: [101, 150], color: "bg-orange-400", textColor: "text-orange-500" },
-  { level: "Unhealthy", range: [151, 200], color: "bg-red-500", textColor: "text-red-500" },
-  { level: "Very Unhealthy", range: [201, 250], color: "bg-purple-600", textColor: "text-purple-600" },
-  { level: "Hazardous", range: [251, 500], color: "bg-rose-900", textColor: "text-rose-900" },
-];
+import { AQIDataPoint } from './api-service';
 
-// Get AQI level based on AQI value
-export const getAQILevel = (aqi: number) => {
-  const level = AQI_LEVELS.find(
-    (level) => aqi >= level.range[0] && aqi <= level.range[1]
-  );
-  return level || AQI_LEVELS[AQI_LEVELS.length - 1]; // Default to hazardous if above range
-};
-
-// Generate sample data for demonstration
-export const generateSampleData = () => {
-  const cities = ["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow"];
+// Generate sample AQI data for demonstration
+export const generateSampleData = (cityName: string = "Delhi"): AQIDataPoint[] => {
+  const data: AQIDataPoint[] = [];
   const today = new Date();
-  const data = [];
-
-  for (let city of cities) {
-    // Past 30 days of data
-    for (let i = 30; i >= 1; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // Base AQI with some randomness
-      const baseAQI = city === "Delhi" ? 85 : 
-                      city === "Mumbai" ? 110 :
-                      city === "Bangalore" ? 60 :
-                      city === "Chennai" ? 75 : 45;
-      
-      // Add some seasonal variation
-      const seasonalFactor = Math.sin((date.getMonth() + 1) / 12 * Math.PI) * 15;
-      
-      // Random daily variation
-      const dailyVariation = Math.round(Math.random() * 20 - 10);
-      
-      // Calculate AQI
-      const aqi = Math.max(0, Math.min(500, Math.round(baseAQI + seasonalFactor + dailyVariation)));
-      
-      // Generate pollutant data with some correlation to AQI
-      const factor = aqi / 100;
-      
-      data.push({
-        date: date.toISOString().split('T')[0],
-        city: city,
-        aqi: aqi,
-        pollutants: {
-          pm25: Math.round((10 + Math.random() * 30) * factor),
-          pm10: Math.round((20 + Math.random() * 50) * factor),
-          no2: Math.round((20 + Math.random() * 40) * factor),
-          o3: Math.round((30 + Math.random() * 35) * factor),
-          co: Math.round((500 + Math.random() * 1000) * factor) / 100,
-          so2: Math.round((5 + Math.random() * 15) * factor),
-          nh3: Math.round((10 + Math.random() * 20) * factor)
-        }
-      });
-    }
+  
+  // Base AQI ranges for different cities (simulating different air quality patterns)
+  const cityBaseAQI: Record<string, number> = {
+    'Delhi': 180,
+    'Mumbai': 120,
+    'Bangalore': 90,
+    'Chennai': 100,
+    'Kolkata': 150,
+    'Hyderabad': 110,
+    'Pune': 105,
+    'Ahmedabad': 130,
+    'Jaipur': 140,
+    'Lucknow': 160,
+    'Ghaziabad': 210,
+    'Faridabad': 170,
+    'Noida': 190,
+    'Gurugram': 175,
+    'Kanpur': 165,
+    'Patna': 155,
+    'Agra': 145,
+    'Varanasi': 150
+  };
+  
+  // Use the city's base AQI or default to Delhi's range if not found
+  const baseAQI = cityBaseAQI[cityName] || 150;
+  
+  // Generate 30 days of historical data
+  for (let i = 30; i >= 1; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    
+    // Create a realistic pattern with some randomness
+    // Simulate weekly patterns, seasonal trends, etc.
+    const dayOfWeek = date.getDay(); // 0-6
+    const weekendEffect = (dayOfWeek === 0 || dayOfWeek === 6) ? -15 : 0; // Better air on weekends
+    const timeVariation = Math.sin(i / 7 * Math.PI) * 30; // Creates a wave pattern
+    const randomEffect = Math.random() * 40 - 20; // Random noise
+    
+    let aqi = Math.round(baseAQI + weekendEffect + timeVariation + randomEffect);
+    // Ensure AQI is within reasonable range (0-500)
+    aqi = Math.max(50, Math.min(400, aqi));
+    
+    data.push({
+      date: date.toISOString().split('T')[0],
+      city: cityName,
+      aqi,
+      pollutants: {
+        pm25: Math.round(aqi * 0.8), // PM2.5 typically makes up a large portion of AQI
+        pm10: Math.round(aqi * 0.5 + Math.random() * 20),
+        no2: Math.round(20 + Math.random() * 30),
+        o3: Math.round(15 + Math.random() * 40),
+        co: Math.round(500 + Math.random() * 500),
+        so2: Math.round(5 + Math.random() * 15),
+        nh3: Math.round(2 + Math.random() * 8)
+      }
+    });
   }
   
-  return data;
+  // Sort by date
+  return data.sort((a, b) => a.date.localeCompare(b.date));
 };

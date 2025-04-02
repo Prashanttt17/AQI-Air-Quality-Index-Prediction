@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 
 // Define data types
@@ -52,26 +53,131 @@ export const AQIDataService = {
     }
     
     try {
-      let endpoint = `${AIR_VISUAL_API_BASE_URL}/cities`;
+      // Default to city data endpoint if city is specified
+      let endpoint = `${AIR_VISUAL_API_BASE_URL}/city`;
+      
       let params = new URLSearchParams({
         key: apiKey
       });
       
-      // If city is specified and not "Select City", get data for that city
+      // If city is specified and not "Select City"
       if (city && city !== "Select City") {
-        // For simplicity, we'll use the nearest_city endpoint but customize the data
-        // In a real implementation, you would use the city endpoint with proper state/country
-        endpoint = `${AIR_VISUAL_API_BASE_URL}/nearest_city`;
+        // For Indian cities, we use a direct city lookup
+        // Add default parameters for Indian cities
+        params.append('country', country || 'India');
         
-        // In a full implementation, you would add these params:
-        // if (state) params.append('state', state);
-        // params.append('country', country || 'India');
-        // params.append('city', city);
+        // Add state parameter if available, otherwise use common states for major cities
+        if (state) {
+          params.append('state', state);
+        } else {
+          // Map of cities to their states for common Indian cities
+          const cityToState: Record<string, string> = {
+            'Delhi': 'Delhi',
+            'New Delhi': 'Delhi',
+            'Mumbai': 'Maharashtra',
+            'Kolkata': 'West Bengal',
+            'Chennai': 'Tamil Nadu',
+            'Bangalore': 'Karnataka',
+            'Hyderabad': 'Telangana',
+            'Ahmedabad': 'Gujarat',
+            'Pune': 'Maharashtra',
+            'Jaipur': 'Rajasthan',
+            'Lucknow': 'Uttar Pradesh',
+            'Kanpur': 'Uttar Pradesh',
+            'Nagpur': 'Maharashtra',
+            'Indore': 'Madhya Pradesh',
+            'Thane': 'Maharashtra',
+            'Bhopal': 'Madhya Pradesh',
+            'Visakhapatnam': 'Andhra Pradesh',
+            'Patna': 'Bihar',
+            'Vadodara': 'Gujarat',
+            'Ghaziabad': 'Uttar Pradesh',
+            'Ludhiana': 'Punjab',
+            'Agra': 'Uttar Pradesh',
+            'Nashik': 'Maharashtra',
+            'Faridabad': 'Haryana',
+            'Meerut': 'Uttar Pradesh',
+            'Rajkot': 'Gujarat',
+            'Varanasi': 'Uttar Pradesh',
+            'Srinagar': 'Jammu and Kashmir',
+            'Aurangabad': 'Maharashtra',
+            'Dhanbad': 'Jharkhand',
+            'Amritsar': 'Punjab',
+            'Allahabad': 'Uttar Pradesh',
+            'Ranchi': 'Jharkhand',
+            'Howrah': 'West Bengal',
+            'Coimbatore': 'Tamil Nadu',
+            'Jabalpur': 'Madhya Pradesh',
+            'Gwalior': 'Madhya Pradesh',
+            'Vijayawada': 'Andhra Pradesh',
+            'Jodhpur': 'Rajasthan',
+            'Madurai': 'Tamil Nadu',
+            'Raipur': 'Chhattisgarh',
+            'Kota': 'Rajasthan',
+            'Chandigarh': 'Chandigarh',
+            'Guwahati': 'Assam',
+            'Solapur': 'Maharashtra',
+            'Hubli–Dharwad': 'Karnataka',
+            'Mysore': 'Karnataka',
+            'Tiruchirappalli': 'Tamil Nadu',
+            'Bareilly': 'Uttar Pradesh',
+            'Aligarh': 'Uttar Pradesh',
+            'Tiruppur': 'Tamil Nadu',
+            'Gurugram': 'Haryana',
+            'Moradabad': 'Uttar Pradesh',
+            'Jalandhar': 'Punjab',
+            'Bhubaneswar': 'Odisha',
+            'Salem': 'Tamil Nadu',
+            'Warangal': 'Telangana',
+            'Mira-Bhayandar': 'Maharashtra',
+            'Jalgaon': 'Maharashtra',
+            'Guntur': 'Andhra Pradesh',
+            'Bhiwandi': 'Maharashtra',
+            'Saharanpur': 'Uttar Pradesh',
+            'Gorakhpur': 'Uttar Pradesh',
+            'Bikaner': 'Rajasthan',
+            'Amravati': 'Maharashtra',
+            'Noida': 'Uttar Pradesh',
+            'Jamshedpur': 'Jharkhand',
+            'Bhilai': 'Chhattisgarh',
+            'Cuttack': 'Odisha',
+            'Firozabad': 'Uttar Pradesh',
+            'Kochi': 'Kerala',
+            'Nellore': 'Andhra Pradesh',
+            'Bhavnagar': 'Gujarat',
+            'Dehradun': 'Uttarakhand',
+            'Durgapur': 'West Bengal',
+            'Asansol': 'West Bengal',
+            'Rourkela': 'Odisha',
+            'Nanded': 'Maharashtra',
+            'Kolhapur': 'Maharashtra',
+            'Ajmer': 'Rajasthan',
+            'Akola': 'Maharashtra',
+            'Gulbarga': 'Karnataka',
+            'Jamnagar': 'Gujarat',
+            'Ujjain': 'Madhya Pradesh',
+            'Loni': 'Uttar Pradesh',
+            'Siliguri': 'West Bengal',
+            'Jhansi': 'Uttar Pradesh',
+            'Ulhasnagar': 'Maharashtra',
+            'Jammu': 'Jammu and Kashmir',
+            'Sangli-Miraj & Kupwad': 'Maharashtra',
+            'Mangalore': 'Karnataka'
+          };
+          
+          // Use the mapped state for the city, or default to a common state
+          const mappedState = cityToState[city] || 'Delhi';
+          params.append('state', mappedState);
+        }
+        
+        // Add city parameter
+        params.append('city', city);
       } else {
-        // If no city is specified, we'll still use nearest_city but won't return any data
+        // If no city specified, use nearest city endpoint
         endpoint = `${AIR_VISUAL_API_BASE_URL}/nearest_city`;
       }
       
+      console.log(`Fetching from ${endpoint}?${params.toString()}`);
       const response = await fetch(`${endpoint}?${params.toString()}`);
       
       if (!response.ok) {
@@ -83,7 +189,7 @@ export const AQIDataService = {
       console.log("API Response:", responseData); // Log for debugging
       
       // Process the data from AirVisual format to our format
-      if (endpoint.includes('nearest_city') || endpoint.includes('city')) {
+      if ((endpoint.includes('nearest_city') || endpoint.includes('city')) && responseData.status === "success") {
         // No city selected, return empty array
         if (!city || city === "Select City") {
           return [];
