@@ -247,8 +247,8 @@ const Index = () => {
                 className="md:col-span-1 h-full"
               />
               
-              {/* Always show the chart component, it will be empty if no data is loaded */}
-              <div className="md:col-span-3 h-full chart-container">
+              {/* Increased height for the chart container */}
+              <div className="md:col-span-3 h-[400px] md:h-[450px] chart-container">
                 <AQIChart 
                   data={chartData}
                   className="h-full"

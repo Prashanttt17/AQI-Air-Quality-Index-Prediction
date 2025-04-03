@@ -127,7 +127,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                margin={{ top: 10, right: 120, left: 25, bottom: 30 }}
+                margin={{ top: 15, right: 130, left: 30, bottom: 35 }}
                 data={showPlaceholder ? placeholderData : undefined}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -136,8 +136,8 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   interval="preserveStartEnd"
                   minTickGap={30}
                   allowDuplicatedCategory={false}
-                  padding={{ left: 10, right: 10 }}
-                  tick={{ fontSize: 11 }}
+                  padding={{ left: 15, right: 15 }}
+                  tick={{ fontSize: 12 }}
                 />
                 <YAxis 
                   domain={[0, yAxisMax]} 
@@ -147,19 +147,19 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     angle: -90, 
                     position: 'insideLeft',
                     style: { textAnchor: 'middle' },
-                    offset: -5,
-                    fontSize: 11
+                    offset: -10,
+                    fontSize: 12
                   }}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 12 }}
                   tickMargin={5}
-                  width={30}
+                  width={35}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend 
-                  wrapperStyle={{ paddingTop: '5px', fontSize: '11px' }} 
+                  wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} 
                   verticalAlign="bottom" 
-                  height={30}
-                  iconSize={8}
+                  height={35}
+                  iconSize={10}
                 />
                 
                 {thresholds.map(threshold => {
@@ -211,9 +211,9 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     dataKey="aqi"
                     name="Historical AQI"
                     stroke="var(--color-historical)"
-                    strokeWidth={2}
-                    dot={{ r: 2, strokeWidth: 1 }}
-                    activeDot={{ r: 4 }}
+                    strokeWidth={2.5}
+                    dot={{ r: 3, strokeWidth: 1.5 }}
+                    activeDot={{ r: 5 }}
                     isAnimationActive={true}
                     connectNulls={true}
                   />
@@ -226,10 +226,10 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     dataKey="aqi"
                     name="Predicted AQI"
                     stroke="var(--color-predicted)"
-                    strokeWidth={2.5}
+                    strokeWidth={3}
                     strokeDasharray="4 0"
-                    dot={{ r: 2.5, strokeWidth: 1.5 }}
-                    activeDot={{ r: 4.5 }}
+                    dot={{ r: 3.5, strokeWidth: 2 }}
+                    activeDot={{ r: 5.5 }}
                     isAnimationActive={true}
                     connectNulls={true}
                   />
