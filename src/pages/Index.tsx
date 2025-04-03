@@ -12,6 +12,7 @@ import AQIChart from '@/components/AQIChart';
 import FileUpload from '@/components/FileUpload';
 import ApiDataFetcher from '@/components/ApiDataFetcher';
 import ApiKeyManager from '@/components/ApiKeyManager';
+import ApiPlatformSelector from '@/components/ApiPlatformSelector';
 import ModelSelector from '@/components/ModelSelector';
 import PollutantsDisplay from '@/components/PollutantsDisplay';
 import CitySelector from '@/components/CitySelector';
@@ -20,7 +21,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 import { generateSampleData } from '@/utils/aqi-utils';
 import { generateEnhancedPredictions } from '@/utils/enhanced-predictive-models';
-import { AQIDataPoint, getApiKey, AQIDataService } from '@/utils/api-service';
+import { AQIDataPoint, getApiKey, AQIDataService, ApiPlatform } from '@/utils/api-service';
 
 const Index = () => {
   // State for data management
@@ -32,6 +33,7 @@ const Index = () => {
   const [selectedTab, setSelectedTab] = useState<string>('dashboard');
   const [isPollutantsOpen, setIsPollutantsOpen] = useState<boolean>(false);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
+  const [selectedApiPlatform, setSelectedApiPlatform] = useState<ApiPlatform>('airvisual');
   
   // Current, tomorrow, and weekly average AQI values
   const [currentAQI, setCurrentAQI] = useState<number>(0);
@@ -40,14 +42,19 @@ const Index = () => {
   
   // Check for API key and show notification if missing
   useEffect(() => {
-    const apiKey = getApiKey();
+    const apiKey = getApiKey(selectedApiPlatform);
     if (!apiKey) {
       toast({
-        title: "API Key Missing",
-        description: "Set your AirVisual API key in the API Access tab to fetch real data.",
+        title: `${selectedApiPlatform === 'airvisual' ? 'AirVisual' : 'AQICN'} API Key Missing`,
+        description: `Set your ${selectedApiPlatform === 'airvisual' ? 'AirVisual' : 'AQICN'} API key in the API Access tab to fetch real data.`,
       });
     }
-  }, []);
+  }, [selectedApiPlatform]);
+  
+  // Handle API platform change
+  const handleApiPlatformChange = (platform: ApiPlatform) => {
+    setSelectedApiPlatform(platform);
+  };
   
   // Handle city selection
   const handleCityChange = async (city: string) => {
@@ -64,9 +71,9 @@ const Index = () => {
     } else {
       // Automatically fetch data for the selected city
       try {
-        const apiKey = getApiKey();
+        const apiKey = getApiKey(selectedApiPlatform);
         if (apiKey) {
-          const data = await AQIDataService.fetchAQIData(city);
+          const data = await AQIDataService.fetchAQIData(city, undefined, undefined, selectedApiPlatform);
           if (data && data.length > 0) {
             handleDataLoaded(data);
           }
@@ -307,6 +314,7 @@ const Index = () => {
                 <ApiDataFetcher 
                   onDataLoaded={handleDataLoaded} 
                   selectedCity={selectedCity}
+                  selectedPlatform={selectedApiPlatform}
                   disabled={selectedCity === "Select City"}
                 />
                 <FileUpload onDataLoaded={handleDataLoaded} />
@@ -322,6 +330,9 @@ const Index = () => {
                 <CardContent className="space-y-5">
                   <div className="rounded-md bg-muted p-5">
                     <div className="space-y-3">
+                      <p className="text-base">
+                        <span className="font-medium">Selected API:</span> {selectedApiPlatform === 'airvisual' ? 'AirVisual' : 'AQICN'}
+                      </p>
                       <p className="text-base">
                         <span className="font-medium">Selected City:</span> {selectedCity}
                       </p>
@@ -362,7 +373,15 @@ const Index = () => {
           
           <TabsContent value="api" className="space-y-8 flex-1 overflow-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <ApiKeyManager />
+              <div className="space-y-8">
+                <ApiPlatformSelector
+                  selectedPlatform={selectedApiPlatform}
+                  onPlatformChange={handleApiPlatformChange}
+                />
+                <ApiKeyManager 
+                  selectedPlatform={selectedApiPlatform} 
+                />
+              </div>
               
               <Card>
                 <CardHeader className="pb-4">
@@ -371,36 +390,56 @@ const Index = () => {
                     API Documentation
                   </CardTitle>
                   <CardDescription className="text-base">
-                    Information about using the AirVisual API
+                    Information about using the {selectedApiPlatform === 'airvisual' ? 'AirVisual' : 'AQICN'} API
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="space-y-3">
-                    <h3 className="text-base font-medium">Available Endpoints</h3>
-                    
-                    <div className="rounded-md bg-muted p-4">
-                      <p className="text-sm font-medium">GET /v2/nearest_city</p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Get nearest city air quality data
-                      </p>
+                  {selectedApiPlatform === 'airvisual' ? (
+                    <div className="space-y-3">
+                      <h3 className="text-base font-medium">Available Endpoints</h3>
+                      
+                      <div className="rounded-md bg-muted p-4">
+                        <p className="text-sm font-medium">GET /v2/nearest_city</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Get nearest city air quality data
+                        </p>
+                      </div>
+                      
+                      <div className="rounded-md bg-muted p-4">
+                        <p className="text-sm font-medium">GET /v2/city</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Get specific city air quality data
+                        </p>
+                      </div>
                     </div>
-                    
-                    <div className="rounded-md bg-muted p-4">
-                      <p className="text-sm font-medium">GET /v2/city</p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Get specific city air quality data
-                      </p>
+                  ) : (
+                    <div className="space-y-3">
+                      <h3 className="text-base font-medium">Available Endpoints</h3>
+                      
+                      <div className="rounded-md bg-muted p-4">
+                        <p className="text-sm font-medium">GET /feed/{'{city}'}</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Get air quality data for a specific city
+                        </p>
+                      </div>
+                      
+                      <div className="rounded-md bg-muted p-4">
+                        <p className="text-sm font-medium">GET /feed/geo:{'{lat}'};{'{lng}'}</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Get air quality data for specific coordinates
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   
                   <div className="space-y-3">
                     <h3 className="text-base font-medium">Authentication</h3>
                     <p className="text-sm text-muted-foreground">
-                      Include your API key as a query parameter:
+                      Include your API key as a {selectedApiPlatform === 'airvisual' ? 'key' : 'token'} parameter:
                     </p>
                     <div className="bg-muted rounded-md p-3">
                       <code className="text-sm">
-                        ?key=your_api_key_here
+                        ?{selectedApiPlatform === 'airvisual' ? 'key' : 'token'}=your_api_key_here
                       </code>
                     </div>
                   </div>
@@ -408,7 +447,12 @@ const Index = () => {
                   <div className="space-y-3">
                     <h3 className="text-base font-medium">Rate Limits</h3>
                     <p className="text-sm text-muted-foreground">
-                      Free tier: 10,000 calls per month (~300 per day)<br />
+                      {selectedApiPlatform === 'airvisual' ? (
+                        <>Free tier: 10,000 calls per month (~300 per day)</>
+                      ) : (
+                        <>Free tier: 1,000 calls per day</>
+                      )}
+                      <br />
                       Premium tiers available for higher limits
                     </p>
                   </div>
@@ -425,7 +469,7 @@ const Index = () => {
             Air Quality Index (AQI) Prediction Dashboard
           </p>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Powered by AirVisual API
+            Powered by {selectedApiPlatform === 'airvisual' ? 'AirVisual' : 'AQICN'} API
           </p>
         </div>
       </footer>

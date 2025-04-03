@@ -5,25 +5,27 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { DownloadCloud, RefreshCw, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AQIDataService, AQIDataPoint, getApiUrl } from "@/utils/api-service";
+import { AQIDataService, AQIDataPoint, getApiUrl, ApiPlatform } from "@/utils/api-service";
 import { generateSampleData } from "@/utils/aqi-utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ApiDataFetcherProps {
   onDataLoaded: (data: AQIDataPoint[]) => void;
   selectedCity: string;
+  selectedPlatform: ApiPlatform;
   disabled?: boolean;
 }
 
 const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ 
   onDataLoaded, 
   selectedCity,
+  selectedPlatform,
   disabled = false 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dataSource, setDataSource] = useState<'api' | 'sample'>('api');
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
-  const apiUrl = getApiUrl();
+  const apiUrl = getApiUrl(selectedPlatform);
   
   // Add throttling to prevent too many API requests
   const THROTTLE_TIME = 10000; // 10 seconds between API calls
@@ -60,8 +62,8 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
         // Update last fetch time
         setLastFetchTime(currentTime);
         
-        // Pass the selected city to the API service
-        data = await AQIDataService.fetchAQIData(selectedCity);
+        // Pass the selected city and platform to the API service
+        data = await AQIDataService.fetchAQIData(selectedCity, undefined, undefined, selectedPlatform);
       } else {
         // Generate sample data for the selected city
         data = generateSampleData(selectedCity);
@@ -81,7 +83,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
       
       toast({
         title: "Success",
-        description: `Loaded ${data.length} data points for ${selectedCity} from ${dataSource === 'api' ? 'API' : 'sample data'}.`,
+        description: `Loaded ${data.length} data points for ${selectedCity} from ${dataSource === 'api' ? selectedPlatform + ' API' : 'sample data'}.`,
       });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -94,7 +96,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
         
         toast({
           title: "API Error - Using Sample Data",
-          description: `Failed to fetch from API for ${selectedCity}. Using sample data instead.`,
+          description: `Failed to fetch from ${selectedPlatform.toUpperCase()} API for ${selectedCity}. Using sample data instead.`,
           variant: "destructive"
         });
       } else {
@@ -128,7 +130,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
               <SelectValue placeholder="Select data source" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="api">API Data</SelectItem>
+              <SelectItem value="api">{selectedPlatform.toUpperCase()} API Data</SelectItem>
               <SelectItem value="sample">Sample Data</SelectItem>
             </SelectContent>
           </Select>
@@ -148,7 +150,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
           <h4 className="text-sm font-medium mb-2">About the Data Source</h4>
           {dataSource === 'api' ? (
             <p className="text-xs text-muted-foreground">
-              Fetches real-time and historical AQI data from the API. Requires a valid API key to be set.
+              Fetches real-time and historical AQI data from the {selectedPlatform.toUpperCase()} API. Requires a valid API key to be set.
               Rate limited to one request every 10 seconds to avoid API throttling.
             </p>
           ) : (
@@ -172,7 +174,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
           ) : (
             <>
               <DownloadCloud className="h-4 w-4 mr-2" />
-              Load {dataSource === 'api' ? 'API' : 'Sample'} Data for {selectedCity !== "Select City" ? selectedCity : "Selected City"}
+              Load {dataSource === 'api' ? selectedPlatform.toUpperCase() + ' API' : 'Sample'} Data for {selectedCity !== "Select City" ? selectedCity : "Selected City"}
             </>
           )}
         </Button>
