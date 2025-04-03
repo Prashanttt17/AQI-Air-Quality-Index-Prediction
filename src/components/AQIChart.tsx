@@ -113,12 +113,12 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
     .map(threshold => threshold.value);
   
   return (
-    <Card className={`h-full ${className}`}>
-      <CardHeader className="pb-1">
+    <Card className={`h-full flex flex-col ${className}`}>
+      <CardHeader className="pb-1 flex-shrink-0">
         <CardTitle>AQI Forecast Chart</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="h-[380px] w-full">
+      <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+        <div className="h-full w-full flex-1">
           <ChartContainer
             config={{
               historical: { color: "#0EA5E9" }, // Brighter blue for better visibility
@@ -127,7 +127,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                margin={{ top: 20, right: 160, left: 35, bottom: 40 }}
+                margin={{ top: 10, right: 120, left: 25, bottom: 30 }}
                 data={showPlaceholder ? placeholderData : undefined}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -137,7 +137,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   minTickGap={30}
                   allowDuplicatedCategory={false}
                   padding={{ left: 10, right: 10 }}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 11 }}
                 />
                 <YAxis 
                   domain={[0, yAxisMax]} 
@@ -147,18 +147,19 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     angle: -90, 
                     position: 'insideLeft',
                     style: { textAnchor: 'middle' },
-                    offset: 0,
-                    fontSize: 12
+                    offset: -5,
+                    fontSize: 11
                   }}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 11 }}
+                  tickMargin={5}
+                  width={30}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend 
-                  wrapperStyle={{ paddingTop: '15px' }} 
+                  wrapperStyle={{ paddingTop: '5px', fontSize: '11px' }} 
                   verticalAlign="bottom" 
-                  height={36}
-                  iconSize={10}
-                  fontSize={12}
+                  height={30}
+                  iconSize={8}
                 />
                 
                 {thresholds.map(threshold => {
@@ -180,8 +181,8 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                             value: threshold.label,
                             position: 'right',
                             fill: threshold.color,
-                            fontSize: 12,
-                            offset: 10
+                            fontSize: 11,
+                            offset: 5
                           }}
                         />
                       </React.Fragment>
@@ -212,7 +213,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     stroke="var(--color-historical)"
                     strokeWidth={2}
                     dot={{ r: 2, strokeWidth: 1 }}
-                    activeDot={{ r: 5 }}
+                    activeDot={{ r: 4 }}
                     isAnimationActive={true}
                     connectNulls={true}
                   />
@@ -225,10 +226,10 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                     dataKey="aqi"
                     name="Predicted AQI"
                     stroke="var(--color-predicted)"
-                    strokeWidth={3}
+                    strokeWidth={2.5}
                     strokeDasharray="4 0"
-                    dot={{ r: 3, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
+                    dot={{ r: 2.5, strokeWidth: 1.5 }}
+                    activeDot={{ r: 4.5 }}
                     isAnimationActive={true}
                     connectNulls={true}
                   />

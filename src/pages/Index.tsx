@@ -185,15 +185,15 @@ const Index = () => {
   return (
     <div className="flex flex-col min-h-screen-safe bg-background">
       <header className="border-b flex-shrink-0">
-        <div className="container py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Air Quality Index (AQI) Prediction Dashboard</h1>
+        <div className="container py-3 flex justify-between items-center">
+          <h1 className="text-xl sm:text-2xl font-bold">Air Quality Index (AQI) Prediction Dashboard</h1>
           <ThemeToggle />
         </div>
       </header>
       
-      <main className="container py-6 flex-1 overflow-hidden flex flex-col">
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 mb-6 flex-shrink-0">
+      <main className="container py-4 flex-1-safe overflow-hidden">
+        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full h-full flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
             <TabsTrigger value="dashboard">
               <Gauge className="h-4 w-4 mr-2" />
               Dashboard
@@ -208,10 +208,10 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="dashboard" className="space-y-6 flex-1 flex flex-col overflow-auto">
+          <TabsContent value="dashboard" className="space-y-4 flex-1 content-area">
             {/* City selector with scroll area */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-shrink-0">
-              <div className="h-[200px] md:h-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 flex-shrink-0">
+              <div className="h-[180px] md:h-auto">
                 <CitySelector
                   cities={cities}
                   selectedCity={selectedCity}
@@ -220,7 +220,7 @@ const Index = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-3 gap-4 md:col-span-3">
+              <div className="grid grid-cols-3 gap-3 md:col-span-3">
                 <AQIInfoCard 
                   title="Current AQI"
                   value={currentAQI}
@@ -240,7 +240,7 @@ const Index = () => {
             </div>
             
             {/* Model Selector and Chart - Show all the time */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 flex-1 min-h-0">
               <ModelSelector
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
@@ -248,7 +248,7 @@ const Index = () => {
               />
               
               {/* Always show the chart component, it will be empty if no data is loaded */}
-              <div className="md:col-span-3 h-full">
+              <div className="md:col-span-3 h-full chart-container">
                 <AQIChart 
                   data={chartData}
                   className="h-full"
@@ -258,10 +258,10 @@ const Index = () => {
             
             {/* Add instruction card when no data is loaded */}
             {!isDataReady && (
-              <Card className="p-8 text-center flex-shrink-0">
+              <Card className="p-6 text-center flex-shrink-0">
                 <CardContent>
-                  <h3 className="text-xl font-medium mb-2">No Data Available</h3>
-                  <p className="text-muted-foreground mb-4">
+                  <h3 className="text-lg font-medium mb-2">No Data Available</h3>
+                  <p className="text-muted-foreground mb-3">
                     {selectedCity === "Select City" 
                       ? "Please select a city from the dropdown above." 
                       : "Please load data for the selected city from the Data Management tab."}
@@ -419,11 +419,11 @@ const Index = () => {
       </main>
       
       <footer className="border-t mt-auto flex-shrink-0">
-        <div className="container py-4 flex justify-between items-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="container py-3 flex justify-between items-center">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Air Quality Index (AQI) Prediction Dashboard
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Powered by AirVisual API
           </p>
         </div>
