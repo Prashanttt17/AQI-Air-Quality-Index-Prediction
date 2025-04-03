@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
@@ -185,33 +186,33 @@ const Index = () => {
   return (
     <div className="flex flex-col min-h-screen-safe bg-background">
       <header className="border-b flex-shrink-0">
-        <div className="container py-3 flex justify-between items-center">
-          <h1 className="text-xl sm:text-2xl font-bold">Air Quality Index (AQI) Prediction Dashboard</h1>
+        <div className="container py-4 flex justify-between items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold">Air Quality Index (AQI) Prediction Dashboard</h1>
           <ThemeToggle />
         </div>
       </header>
       
-      <main className="container py-4 flex-1-safe overflow-hidden">
+      <main className="container py-6 flex-1-safe overflow-hidden">
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full h-full flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
-            <TabsTrigger value="dashboard">
-              <Gauge className="h-4 w-4 mr-2" />
+          <TabsList className="grid w-full grid-cols-3 mb-6 flex-shrink-0 h-12">
+            <TabsTrigger value="dashboard" className="text-base">
+              <Gauge className="h-5 w-5 mr-2" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="data">
-              <CloudSun className="h-4 w-4 mr-2" />
+            <TabsTrigger value="data" className="text-base">
+              <CloudSun className="h-5 w-5 mr-2" />
               Data Management
             </TabsTrigger>
-            <TabsTrigger value="api">
-              <Key className="h-4 w-4 mr-2" />
+            <TabsTrigger value="api" className="text-base">
+              <Key className="h-5 w-5 mr-2" />
               API Access
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="dashboard" className="space-y-4 flex-1 content-area">
+          <TabsContent value="dashboard" className="space-y-6 flex-1 content-area">
             {/* City selector with scroll area */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 flex-shrink-0">
-              <div className="h-[180px] md:h-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 flex-shrink-0">
+              <div className="h-[190px] md:h-auto">
                 <CitySelector
                   cities={cities}
                   selectedCity={selectedCity}
@@ -220,7 +221,7 @@ const Index = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-3 gap-3 md:col-span-3">
+              <div className="grid grid-cols-3 gap-5 md:col-span-3">
                 <AQIInfoCard 
                   title="Current AQI"
                   value={currentAQI}
@@ -240,7 +241,7 @@ const Index = () => {
             </div>
             
             {/* Model Selector and Chart - Show all the time */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 flex-1 min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 flex-1 min-h-0">
               <ModelSelector
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
@@ -248,7 +249,7 @@ const Index = () => {
               />
               
               {/* Increased height for the chart container */}
-              <div className="md:col-span-3 h-[400px] md:h-[450px] chart-container">
+              <div className="md:col-span-3 h-[450px] md:h-[520px] chart-container">
                 <AQIChart 
                   data={chartData}
                   className="h-full"
@@ -258,10 +259,10 @@ const Index = () => {
             
             {/* Add instruction card when no data is loaded */}
             {!isDataReady && (
-              <Card className="p-6 text-center flex-shrink-0">
+              <Card className="p-8 text-center flex-shrink-0">
                 <CardContent>
-                  <h3 className="text-lg font-medium mb-2">No Data Available</h3>
-                  <p className="text-muted-foreground mb-3">
+                  <h3 className="text-xl font-medium mb-3">No Data Available</h3>
+                  <p className="text-muted-foreground mb-4 text-base">
                     {selectedCity === "Select City" 
                       ? "Please select a city from the dropdown above." 
                       : "Please load data for the selected city from the Data Management tab."}
@@ -286,8 +287,8 @@ const Index = () => {
               >
                 <CollapsibleTrigger className="w-full">
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Pollutant Levels {isPollutantsOpen ? '▼' : '▶'}</CardTitle>
+                    <CardHeader className="py-5">
+                      <CardTitle className="text-lg">Pollutant Levels {isPollutantsOpen ? '▼' : '▶'}</CardTitle>
                     </CardHeader>
                   </Card>
                 </CollapsibleTrigger>
@@ -300,9 +301,9 @@ const Index = () => {
             )}
           </TabsContent>
           
-          <TabsContent value="data" className="space-y-6 flex-1 overflow-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-6">
+          <TabsContent value="data" className="space-y-8 flex-1 overflow-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-8">
                 <ApiDataFetcher 
                   onDataLoaded={handleDataLoaded} 
                   selectedCity={selectedCity}
@@ -312,28 +313,28 @@ const Index = () => {
               </div>
               
               <Card>
-                <CardHeader>
-                  <CardTitle>Data Information</CardTitle>
-                  <CardDescription>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Data Information</CardTitle>
+                  <CardDescription className="text-base">
                     Current data status and requirements
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="rounded-md bg-muted p-4">
-                    <div className="space-y-2">
-                      <p className="text-sm">
+                <CardContent className="space-y-5">
+                  <div className="rounded-md bg-muted p-5">
+                    <div className="space-y-3">
+                      <p className="text-base">
                         <span className="font-medium">Selected City:</span> {selectedCity}
                       </p>
-                      <p className="text-sm">
+                      <p className="text-base">
                         <span className="font-medium">Total Records:</span> {rawData.length}
                       </p>
-                      <p className="text-sm">
+                      <p className="text-base">
                         <span className="font-medium">Cities:</span>{' '}
-                        <ScrollArea className="h-20">
+                        <ScrollArea className="h-24">
                           {cities.join(', ')}
                         </ScrollArea>
                       </p>
-                      <p className="text-sm">
+                      <p className="text-base">
                         <span className="font-medium">Date Range:</span>{' '}
                         {rawData.length > 0 
                           ? `${new Date(rawData[0].date).toLocaleDateString()} to ${new Date(rawData[rawData.length-1].date).toLocaleDateString()}`
@@ -342,11 +343,11 @@ const Index = () => {
                     </div>
                   </div>
                   
-                  <div className="rounded-md bg-muted p-4">
-                    <h4 className="text-sm font-medium mb-2">CSV Format Guide</h4>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="rounded-md bg-muted p-5">
+                    <h4 className="text-base font-medium mb-3">CSV Format Guide</h4>
+                    <p className="text-sm text-muted-foreground">
                       Upload any CSV format - the system will automatically detect:
-                      <ul className="list-disc list-inside mt-2 space-y-1">
+                      <ul className="list-disc list-inside mt-3 space-y-2">
                         <li>Date columns (various formats supported)</li>
                         <li>Location/City columns</li>
                         <li>AQI values</li>
@@ -359,54 +360,54 @@ const Index = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="api" className="space-y-6 flex-1 overflow-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TabsContent value="api" className="space-y-8 flex-1 overflow-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <ApiKeyManager />
               
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Database className="h-5 w-5" />
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Database className="h-6 w-6" />
                     API Documentation
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-base">
                     Information about using the AirVisual API
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Available Endpoints</h3>
+                <CardContent className="space-y-5">
+                  <div className="space-y-3">
+                    <h3 className="text-base font-medium">Available Endpoints</h3>
                     
-                    <div className="rounded-md bg-muted p-3">
-                      <p className="text-xs font-medium">GET /v2/nearest_city</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                    <div className="rounded-md bg-muted p-4">
+                      <p className="text-sm font-medium">GET /v2/nearest_city</p>
+                      <p className="text-sm text-muted-foreground mt-2">
                         Get nearest city air quality data
                       </p>
                     </div>
                     
-                    <div className="rounded-md bg-muted p-3">
-                      <p className="text-xs font-medium">GET /v2/city</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                    <div className="rounded-md bg-muted p-4">
+                      <p className="text-sm font-medium">GET /v2/city</p>
+                      <p className="text-sm text-muted-foreground mt-2">
                         Get specific city air quality data
                       </p>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Authentication</h3>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="space-y-3">
+                    <h3 className="text-base font-medium">Authentication</h3>
+                    <p className="text-sm text-muted-foreground">
                       Include your API key as a query parameter:
                     </p>
-                    <div className="bg-muted rounded-md p-2">
-                      <code className="text-xs">
+                    <div className="bg-muted rounded-md p-3">
+                      <code className="text-sm">
                         ?key=your_api_key_here
                       </code>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Rate Limits</h3>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="space-y-3">
+                    <h3 className="text-base font-medium">Rate Limits</h3>
+                    <p className="text-sm text-muted-foreground">
                       Free tier: 10,000 calls per month (~300 per day)<br />
                       Premium tiers available for higher limits
                     </p>
@@ -419,11 +420,11 @@ const Index = () => {
       </main>
       
       <footer className="border-t mt-auto flex-shrink-0">
-        <div className="container py-3 flex justify-between items-center">
-          <p className="text-xs sm:text-sm text-muted-foreground">
+        <div className="container py-4 flex justify-between items-center">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Air Quality Index (AQI) Prediction Dashboard
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Powered by AirVisual API
           </p>
         </div>

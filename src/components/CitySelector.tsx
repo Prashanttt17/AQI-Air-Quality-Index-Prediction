@@ -126,30 +126,30 @@ const CitySelector: React.FC<CitySelectorProps> = ({
 
   return (
     <Card className={`h-full flex flex-col ${className}`}>
-      <CardHeader className="flex-shrink-0 pb-2 pt-3">
-        <CardTitle className="text-base flex items-center">
-          <MapPin className="h-4 w-4 mr-1" /> 
+      <CardHeader className="flex-shrink-0 pb-3 pt-4">
+        <CardTitle className="text-lg flex items-center">
+          <MapPin className="h-5 w-5 mr-2" /> 
           Location
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 px-3 pb-3 pt-0 overflow-hidden flex flex-col">
-        <div className="space-y-3 flex-1 flex flex-col">
+      <CardContent className="flex-1 px-4 pb-4 pt-0 overflow-hidden flex flex-col">
+        <div className="space-y-4 flex-1 flex flex-col">
           {/* State selection dropdown */}
           <div className="flex-shrink-0">
-            <label className="text-xs font-medium mb-1 block text-muted-foreground">
+            <label className="text-sm font-medium mb-1.5 block text-muted-foreground">
               State/Territory
             </label>
             <Select 
               value={selectedState} 
               onValueChange={setSelectedState}
             >
-              <SelectTrigger className="w-full h-8 text-xs">
+              <SelectTrigger className="w-full h-9 text-sm">
                 <SelectValue placeholder="Select state" />
               </SelectTrigger>
               <SelectContent className="max-h-[250px]">
                 <ScrollArea className="h-[250px]">
                   {statesList.map(state => (
-                    <SelectItem key={state} value={state} className="text-xs">
+                    <SelectItem key={state} value={state} className="text-sm">
                       {state}
                     </SelectItem>
                   ))}
@@ -160,7 +160,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
           
           {/* City selection dropdown */}
           <div className="flex-1 min-h-0 flex flex-col">
-            <label className="text-xs font-medium mb-1 block text-muted-foreground flex-shrink-0">
+            <label className="text-sm font-medium mb-1.5 block text-muted-foreground flex-shrink-0">
               City
             </label>
             <div className="flex-1 min-h-0">
@@ -168,13 +168,13 @@ const CitySelector: React.FC<CitySelectorProps> = ({
                 value={selectedCity} 
                 onValueChange={onCityChange}
               >
-                <SelectTrigger className="w-full h-8 text-xs">
+                <SelectTrigger className="w-full h-9 text-sm">
                   <SelectValue placeholder="Select city" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
                   <ScrollArea className="h-[200px]">
                     {filteredCities.map(city => (
-                      <SelectItem key={city} value={city} className="text-xs">
+                      <SelectItem key={city} value={city} className="text-sm">
                         {city}
                       </SelectItem>
                     ))}

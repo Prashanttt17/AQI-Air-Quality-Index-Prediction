@@ -17,22 +17,22 @@ const AQIInfoCard: React.FC<AQIInfoCardProps> = ({ title, value, subtitle, class
   
   return (
     <Card className={className}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-md font-medium">{title}</CardTitle>
+      <CardHeader className="pb-2 pt-4">
+        <CardTitle className="text-lg font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center">
-          <div className="flex items-center space-x-2">
-            <div className={`w-3 h-3 rounded-full ${aqiLevel.color}`} />
-            <span className="text-2xl font-bold">{safeValue}</span>
+        <div className="flex flex-col items-center py-1">
+          <div className="flex items-center space-x-3">
+            <div className={`w-4 h-4 rounded-full ${aqiLevel.color}`} />
+            <span className="text-3xl font-bold">{safeValue}</span>
           </div>
-          <div className="mt-1">
-            <span className={`text-sm font-medium ${aqiLevel.textColor}`}>
+          <div className="mt-2">
+            <span className={`text-base font-medium ${aqiLevel.textColor}`}>
               {aqiLevel.level}
             </span>
           </div>
           {subtitle && (
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-sm text-muted-foreground mt-2">
               {subtitle}
             </div>
           )}
