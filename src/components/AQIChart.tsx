@@ -114,7 +114,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
   
   return (
     <Card className={`h-full flex flex-col ${className}`}>
-      <CardHeader className="pb-1 flex-shrink-0">
+      <CardHeader className="pb-6 pt-4 flex-shrink-0">
         <CardTitle>AQI Forecast Chart</CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1 flex flex-col min-h-0">
