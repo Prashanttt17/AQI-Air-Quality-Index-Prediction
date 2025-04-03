@@ -69,18 +69,18 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
   
   return (
     <Card className={className}>
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle>7-Day AQI Forecast</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-2">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="w-full">
             <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>AQI</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Main Pollutant</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="py-1">Date</TableHead>
+                <TableHead className="py-1">AQI</TableHead>
+                <TableHead className="py-1">Category</TableHead>
+                <TableHead className="py-1">Main Pollutant</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -118,17 +118,17 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
                 const aqiColor = getAQIColor(prediction.aqi);
                 
                 return (
-                  <TableRow key={index}>
-                    <TableCell>
+                  <TableRow key={index} className="hover:bg-transparent">
+                    <TableCell className="py-1">
                       {formatDate(prediction.date)}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium py-1">
                       <span className={`${aqiColor}`}>{Math.round(prediction.aqi)}</span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-1">
                       <span className={`${aqiColor}`}>{getAQICategory(prediction.aqi)}</span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-1">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -136,8 +136,8 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
                               {mainPollutant}
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs p-4">
-                            <p className="font-medium mb-2">{mainPollutant}</p>
+                          <TooltipContent className="max-w-xs p-3">
+                            <p className="font-medium mb-1">{mainPollutant}</p>
                             <p className="text-xs text-muted-foreground">
                               {getPollutantHealth(mainPollutant)}
                             </p>
