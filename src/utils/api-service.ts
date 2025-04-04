@@ -19,6 +19,7 @@ export interface AQIDataPoint {
   id?: string;
   date: string;
   city: string;
+  location?: string; // Added location field to distinguish between city and specific monitoring station
   aqi: number;
   pollutants?: PollutantData;
   predicted?: boolean;
@@ -40,6 +41,36 @@ export const saveApiKey = (apiKey: string, platform: ApiPlatform = 'airvisual'):
 // Get API key from localStorage with platform identifier
 export const getApiKey = (platform: ApiPlatform = 'airvisual'): string | null => {
   return localStorage.getItem(`aqi_${platform}_api_key`);
+};
+
+// Helper to extract the base city name from AQICN location
+export const extractBaseCity = (cityString: string): string => {
+  // First, try to extract city from format like "Sanjay Palace, Agra" -> "Agra"
+  const parts = cityString.split(',').map(part => part.trim());
+  if (parts.length > 1) {
+    // Return the last part as it's typically the main city name
+    return parts[parts.length - 1];
+  }
+  
+  // For cases like "Nehru Nagar, Kanpur" or places without commas
+  const knownCities = [
+    "Delhi", "Mumbai", "Kolkata", "Chennai", "Bangalore", "Hyderabad", "Ahmedabad", "Pune",
+    "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane", "Bhopal", "Visakhapatnam",
+    "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra", "Nashik", "Faridabad", "Meerut",
+    "Rajkot", "Varanasi", "Srinagar", "Aurangabad", "Dhanbad", "Amritsar", "Allahabad",
+    "Ranchi", "Howrah", "Coimbatore", "Jabalpur", "Gwalior", "Vijayawada", "Jodhpur",
+    "Madurai", "Raipur", "Kota", "Chandigarh", "Mysore", "Guwahati"
+  ];
+
+  // Check if any known city is part of the location name
+  for (const city of knownCities) {
+    if (cityString.includes(city)) {
+      return city;
+    }
+  }
+  
+  // If no known city is found, return the original string
+  return cityString;
 };
 
 export const AQIDataService = {
@@ -358,8 +389,10 @@ export const AQIDataService = {
         // Create data points for today and historical (need to simulate historical since free tier won't have it)
         const dataPoints: AQIDataPoint[] = [];
         
-        // Use the city name from the API response
-        const cityName = aqicnData.city.name.split(',')[0] || city;
+        // Extract location and city information
+        const fullLocationName = aqicnData.city?.name || city;
+        const specificLocation = fullLocationName.split(',')[0] || '';
+        const baseCity = extractBaseCity(fullLocationName);
         
         // Extract pollutant data
         const pollutants: PollutantData = {
@@ -375,7 +408,8 @@ export const AQIDataService = {
         // Add current data point with actual AQI from the API
         dataPoints.push({
           date: currentDate,
-          city: cityName,
+          city: baseCity, // Store the main city name
+          location: specificLocation, // Store the specific location
           aqi: aqicnData.aqi,
           pollutants
         });
@@ -403,7 +437,8 @@ export const AQIDataService = {
           
           dataPoints.push({
             date: pastDate.toISOString().split('T')[0],
-            city: cityName,
+            city: baseCity, // Store the main city name
+            location: specificLocation, // Store the specific location
             aqi: historicalAqi,
             pollutants: historicalPollutants
           });

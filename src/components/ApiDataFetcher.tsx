@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AQIDataService, AQIDataPoint, getApiUrl, ApiPlatform } from "@/utils/api-service";
 import { generateSampleData } from "@/utils/aqi-utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 interface ApiDataFetcherProps {
   onDataLoaded: (data: AQIDataPoint[]) => void;
@@ -25,6 +26,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [dataSource, setDataSource] = useState<'api' | 'sample'>('api');
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [lastLocation, setLastLocation] = useState<string | null>(null);
   const apiUrl = getApiUrl(selectedPlatform);
   
   // Add throttling to prevent too many API requests
@@ -64,9 +66,17 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
         
         // Pass the selected city and platform to the API service
         data = await AQIDataService.fetchAQIData(selectedCity, undefined, undefined, selectedPlatform);
+        
+        // Check if we have specific location information (especially for AQICN API)
+        if (data.length > 0 && data[0].location) {
+          setLastLocation(data[0].location);
+        } else {
+          setLastLocation(null);
+        }
       } else {
         // Generate sample data for the selected city
         data = generateSampleData(selectedCity);
+        setLastLocation(null);
       }
       
       if (data.length === 0) {
@@ -91,6 +101,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
       // If API fails, use sample data as fallback
       if (dataSource === 'api') {
         const sampleData = generateSampleData(selectedCity);
+        setLastLocation(null);
             
         onDataLoaded(sampleData);
         
@@ -136,6 +147,19 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
           </Select>
         </div>
         
+        {lastLocation && selectedPlatform === 'aqicn' && (
+          <div className="rounded-md bg-muted p-3">
+            <h4 className="text-sm font-medium mb-1">Specific Location</h4>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">{lastLocation}</Badge>
+              <span className="text-xs text-muted-foreground">in {selectedCity}</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              AQICN API provides data for specific monitoring stations in each city.
+            </p>
+          </div>
+        )}
+        
         <Alert>
           <Info className="h-4 w-4" />
           <AlertTitle>API Information</AlertTitle>
@@ -152,6 +176,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
             <p className="text-xs text-muted-foreground">
               Fetches real-time and historical AQI data from the {selectedPlatform.toUpperCase()} API. Requires a valid API key to be set.
               Rate limited to one request every 10 seconds to avoid API throttling.
+              {selectedPlatform === 'aqicn' && <span className="block mt-1">Note: AQICN API provides data for specific monitoring stations within cities.</span>}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">

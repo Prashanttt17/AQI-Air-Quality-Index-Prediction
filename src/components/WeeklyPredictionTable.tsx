@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AQIDataPoint } from '@/utils/api-service';
 import { format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface WeeklyPredictionTableProps {
   predictions: AQIDataPoint[];
@@ -67,10 +68,25 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
   // Only show the first 7 days of predictions
   const weekPredictions = predictions.slice(0, 7);
   
+  // Check if we have specific location data
+  const hasLocationData = weekPredictions.length > 0 && weekPredictions[0].location;
+  
   return (
     <Card className={className}>
       <CardHeader className="pb-2">
-        <CardTitle>7-Day AQI Forecast</CardTitle>
+        <div className="flex flex-col">
+          <CardTitle>7-Day AQI Forecast</CardTitle>
+          {hasLocationData && (
+            <div className="flex items-center mt-1">
+              <Badge variant="outline" className="text-xs font-normal">
+                {weekPredictions[0].location}
+              </Badge>
+              <span className="text-xs text-muted-foreground ml-2">
+                Location specific data
+              </span>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="p-2">
         <div className="overflow-x-auto">

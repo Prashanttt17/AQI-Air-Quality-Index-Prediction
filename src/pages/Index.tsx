@@ -6,6 +6,7 @@ import { Gauge, CloudSun, Database, Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from "@/components/ui/badge";
 
 import AQIInfoCard from '@/components/AQIInfoCard';
 import AQIChart from '@/components/AQIChart';
