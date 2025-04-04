@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { 
@@ -60,17 +60,19 @@ interface CitySelectorProps {
   selectedCity: string;
   onCityChange: (city: string) => void;
   className?: string;
+  // Add these new props for state persistence
+  selectedState: string;
+  onStateChange: (state: string) => void;
 }
 
 const CitySelector: React.FC<CitySelectorProps> = ({ 
   cities, 
   selectedCity, 
   onCityChange,
-  className
+  className,
+  selectedState,
+  onStateChange
 }) => {
-  // State for selected state filter
-  const [selectedState, setSelectedState] = useState<string>("All States");
-  
   // Combine both predefined cities and API-provided cities
   const allCities = React.useMemo(() => {
     // Create a set from our ALL_INDIAN_CITIES list and API-provided cities
@@ -124,6 +126,19 @@ const CitySelector: React.FC<CitySelectorProps> = ({
     return ["Select City", ...(citiesByState[selectedState] || [])];
   }, [selectedState, citiesByState, allCities]);
 
+  // Set appropriate city when state changes
+  useEffect(() => {
+    if (selectedCity !== "Select City") {
+      const cityState = findStateForCity(selectedCity);
+      if (cityState !== selectedState && cityState !== "Other") {
+        // If city belongs to a different state, update state selection
+        if (selectedState !== cityState) {
+          onStateChange(cityState);
+        }
+      }
+    }
+  }, [selectedCity]);
+
   return (
     <Card className={`h-full flex flex-col ${className}`}>
       <CardHeader className="flex-shrink-0 pb-3 pt-4">
@@ -141,7 +156,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
             </label>
             <Select 
               value={selectedState} 
-              onValueChange={setSelectedState}
+              onValueChange={onStateChange}
             >
               <SelectTrigger className="w-full h-9 text-sm">
                 <SelectValue placeholder="Select state" />

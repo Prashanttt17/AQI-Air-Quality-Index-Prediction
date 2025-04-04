@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
@@ -5,7 +6,6 @@ import { Gauge, CloudSun, Database, Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Badge } from "@/components/ui/badge";
 
 import AQIInfoCard from '@/components/AQIInfoCard';
 import AQIChart from '@/components/AQIChart';
@@ -34,6 +34,8 @@ const Index = () => {
   const [isPollutantsOpen, setIsPollutantsOpen] = useState<boolean>(false);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [selectedApiPlatform, setSelectedApiPlatform] = useState<ApiPlatform>('airvisual');
+  // Add state selection state
+  const [selectedState, setSelectedState] = useState<string>("All States");
   
   // Current, tomorrow, and weekly average AQI values
   const [currentAQI, setCurrentAQI] = useState<number>(0);
@@ -74,7 +76,7 @@ const Index = () => {
       setWeeklyAvgAQI(0);
       setDataLoaded(false);
     } else {
-      // Automatically fetch data for the selected city
+      // Automatically fetch data for the selected city for both API platforms
       try {
         const apiKey = getApiKey(selectedApiPlatform);
         if (apiKey) {
@@ -87,6 +89,12 @@ const Index = () => {
         console.error("Error fetching data for city:", error);
       }
     }
+  };
+  
+  // Handle state selection
+  const handleStateChange = (state: string) => {
+    setSelectedState(state);
+    // We don't reset the city here to maintain selection across tabs
   };
   
   // Handle data loading (from API, file upload, or sample)
@@ -238,6 +246,8 @@ const Index = () => {
                   cities={cities}
                   selectedCity={selectedCity}
                   onCityChange={handleCityChange}
+                  selectedState={selectedState}
+                  onStateChange={handleStateChange}
                   className="md:col-span-1 h-full"
                 />
               </div>
@@ -330,6 +340,7 @@ const Index = () => {
                   selectedCity={selectedCity}
                   selectedPlatform={selectedApiPlatform}
                   disabled={selectedCity === "Select City"}
+                  selectedState={selectedState}
                 />
                 <FileUpload onDataLoaded={handleDataLoaded} />
               </div>
@@ -348,6 +359,9 @@ const Index = () => {
                         <span className="font-medium">Selected API:</span> {selectedApiPlatform === 'airvisual' ? 'AirVisual' : 'AQICN'}
                       </p>
                       <p className="text-base">
+                        <span className="font-medium">Selected State:</span> {selectedState}
+                      </p>
+                      <p className="text-base">
                         <span className="font-medium">Selected City:</span> {selectedCity}
                       </p>
                       <p className="text-base">
@@ -356,7 +370,11 @@ const Index = () => {
                       <p className="text-base">
                         <span className="font-medium">Cities:</span>{' '}
                         <ScrollArea className="h-24">
-                          {cities.join(', ')}
+                          <div className="space-y-1">
+                            {cities.map(city => (
+                              <div key={city}>{city}</div>
+                            ))}
+                          </div>
                         </ScrollArea>
                       </p>
                       <p className="text-base">
@@ -370,15 +388,15 @@ const Index = () => {
                   
                   <div className="rounded-md bg-muted p-5">
                     <h4 className="text-base font-medium mb-3">CSV Format Guide</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Upload any CSV format - the system will automatically detect:
+                    <div className="text-sm text-muted-foreground">
+                      <p>Upload any CSV format - the system will automatically detect:</p>
                       <ul className="list-disc list-inside mt-3 space-y-2">
                         <li>Date columns (various formats supported)</li>
                         <li>Location/City columns</li>
                         <li>AQI values</li>
                         <li>Pollutant measurements (PM2.5, PM10, etc.)</li>
                       </ul>
-                    </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

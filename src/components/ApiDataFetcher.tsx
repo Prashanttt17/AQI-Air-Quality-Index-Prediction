@@ -14,6 +14,7 @@ interface ApiDataFetcherProps {
   onDataLoaded: (data: AQIDataPoint[]) => void;
   selectedCity: string;
   selectedPlatform: ApiPlatform;
+  selectedState: string;
   disabled?: boolean;
 }
 
@@ -21,6 +22,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
   onDataLoaded, 
   selectedCity,
   selectedPlatform,
+  selectedState,
   disabled = false 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +67,8 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
         setLastFetchTime(currentTime);
         
         // Pass the selected city and platform to the API service
-        data = await AQIDataService.fetchAQIData(selectedCity, undefined, undefined, selectedPlatform);
+        // Add selectedState as a parameter
+        data = await AQIDataService.fetchAQIData(selectedCity, selectedState, undefined, selectedPlatform);
         
         // Check if we have specific location information (especially for AQICN API)
         if (data.length > 0 && data[0].location) {
