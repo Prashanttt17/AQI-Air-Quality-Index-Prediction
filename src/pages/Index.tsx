@@ -150,6 +150,18 @@ const Index = () => {
       validData.map(item => item.location ? `${item.location}, ${item.city}` : item.city)
     )];
     setCities(uniqueCitiesWithLocation);
+    
+    // If we loaded data for a specific city, make sure it's selected
+    if (validData.length > 0) {
+      const firstItem = validData[0];
+      const cityDisplay = firstItem.location ? 
+        `${firstItem.location}, ${firstItem.city}` : 
+        firstItem.city;
+      
+      if (selectedCity === "Select City" || selectedCity !== cityDisplay) {
+        setSelectedCity(cityDisplay);
+      }
+    }
   };
   
   // Update predictions when model, city, or data changes
@@ -167,10 +179,11 @@ const Index = () => {
     const cityData = rawData.filter(item => {
       const itemCity = item.city;
       const itemLocation = item.location;
+      const fullItemLocation = itemLocation ? `${itemLocation}, ${itemCity}` : itemCity;
       
       // Check if the item matches either the direct city name or the location-city combination
       return itemCity === selectedCity || 
-             (itemLocation && `${itemLocation}, ${itemCity}` === selectedCity) ||
+             fullItemLocation === selectedCity ||
              (selectedCity.includes(itemCity)); // Also match if selected city contains the base city name
     });
     

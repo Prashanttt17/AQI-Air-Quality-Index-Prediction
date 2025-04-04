@@ -363,8 +363,16 @@ export const AQIDataService = {
         return [];
       }
       
+      // Extract base city name for AQICN API
+      // For location-specific queries like "Sanjay Palace, Agra", we want to use "Agra"
+      let baseCity = city;
+      if (city.includes(',')) {
+        const parts = city.split(',');
+        baseCity = parts[parts.length - 1].trim();
+      }
+      
       // AQICN uses the /feed/ endpoint for city searches
-      const endpoint = `${AQICN_API_BASE_URL}/feed/${encodeURIComponent(city)}/`;
+      const endpoint = `${AQICN_API_BASE_URL}/feed/${encodeURIComponent(baseCity)}/`;
       
       let params = new URLSearchParams({
         token: apiKey
@@ -391,7 +399,7 @@ export const AQIDataService = {
         // Extract location and city information
         const fullLocationName = aqicnData.city?.name || city;
         const specificLocation = fullLocationName.split(',')[0].trim() || '';
-        const baseCity = extractBaseCity(fullLocationName);
+        const baseExtractedCity = extractBaseCity(fullLocationName);
         
         // Extract pollutant data
         const pollutants: PollutantData = {
@@ -407,7 +415,7 @@ export const AQIDataService = {
         // Add current data point with actual AQI from the API
         dataPoints.push({
           date: currentDate,
-          city: baseCity, // Store the main city name
+          city: baseExtractedCity, // Store the main city name
           location: specificLocation, // Store the specific location
           aqi: aqicnData.aqi,
           pollutants
@@ -436,7 +444,7 @@ export const AQIDataService = {
           
           dataPoints.push({
             date: pastDate.toISOString().split('T')[0],
-            city: baseCity, // Store the main city name
+            city: baseExtractedCity, // Store the main city name
             location: specificLocation, // Store the specific location
             aqi: historicalAqi,
             pollutants: historicalPollutants
@@ -475,7 +483,7 @@ export const AQIDataService = {
                 
                 dataPoints.push({
                   date: forecastDay.day,
-                  city: baseCity,
+                  city: baseExtractedCity,
                   location: specificLocation,
                   aqi: estimatedAqi,
                   pollutants: forecastPollutants,

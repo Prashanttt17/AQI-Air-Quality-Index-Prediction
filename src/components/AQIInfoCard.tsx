@@ -15,6 +15,9 @@ const AQIInfoCard: React.FC<AQIInfoCardProps> = ({ title, value, subtitle, class
   const safeValue = isNaN(value) ? 0 : value;
   const aqiLevel = getAQILevel(safeValue);
   
+  // Format display value to avoid showing decimal places
+  const displayValue = Math.round(safeValue);
+  
   return (
     <Card className={className}>
       <CardHeader className="pb-2 pt-4">
@@ -24,7 +27,7 @@ const AQIInfoCard: React.FC<AQIInfoCardProps> = ({ title, value, subtitle, class
         <div className="flex flex-col items-center py-1">
           <div className="flex items-center space-x-3">
             <div className={`w-4 h-4 rounded-full ${aqiLevel.color}`} />
-            <span className="text-3xl font-bold">{safeValue}</span>
+            <span className="text-3xl font-bold">{displayValue}</span>
           </div>
           <div className="mt-2">
             <span className={`text-base font-medium ${aqiLevel.textColor}`}>
