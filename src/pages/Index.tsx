@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
@@ -55,6 +54,11 @@ const Index = () => {
   // Handle API platform change
   const handleApiPlatformChange = (platform: ApiPlatform) => {
     setSelectedApiPlatform(platform);
+    
+    // Reset data when platform changes
+    setRawData([]);
+    setPredictions([]);
+    setDataLoaded(false);
   };
   
   // Handle city selection
@@ -115,6 +119,7 @@ const Index = () => {
       return;
     }
     
+    console.log("Valid data loaded:", validData);
     setRawData(validData);
     setDataLoaded(true);
     
@@ -150,6 +155,14 @@ const Index = () => {
     
     // Generate predictions using the enhanced selected model
     const newPredictions = generateEnhancedPredictions(cityData, selectedModel);
+    
+    // Preserve location information from original data
+    if (cityData[0].location) {
+      newPredictions.forEach(pred => {
+        pred.location = cityData[0].location;
+      });
+    }
+    
     setPredictions(newPredictions);
     
     // Calculate current, tomorrow, and weekly average AQI

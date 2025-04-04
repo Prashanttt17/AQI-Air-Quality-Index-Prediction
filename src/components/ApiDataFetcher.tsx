@@ -73,6 +73,8 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
         } else {
           setLastLocation(null);
         }
+        
+        console.log("API Data Fetched:", data);
       } else {
         // Generate sample data for the selected city
         data = generateSampleData(selectedCity);
@@ -147,7 +149,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
           </Select>
         </div>
         
-        {lastLocation && selectedPlatform === 'aqicn' && (
+        {lastLocation && (
           <div className="rounded-md bg-muted p-3">
             <h4 className="text-sm font-medium mb-1">Specific Location</h4>
             <div className="flex items-center gap-2">
@@ -155,7 +157,9 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
               <span className="text-xs text-muted-foreground">in {selectedCity}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              AQICN API provides data for specific monitoring stations in each city.
+              {selectedPlatform === 'aqicn' ? 
+                'AQICN API provides data for specific monitoring stations in each city.' :
+                'AirVisual API specific location information.'}
             </p>
           </div>
         )}
@@ -177,6 +181,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
               Fetches real-time and historical AQI data from the {selectedPlatform.toUpperCase()} API. Requires a valid API key to be set.
               Rate limited to one request every 10 seconds to avoid API throttling.
               {selectedPlatform === 'aqicn' && <span className="block mt-1">Note: AQICN API provides data for specific monitoring stations within cities.</span>}
+              {selectedPlatform === 'airvisual' && <span className="block mt-1">Note: AirVisual API provides city-level data with limited station details.</span>}
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">

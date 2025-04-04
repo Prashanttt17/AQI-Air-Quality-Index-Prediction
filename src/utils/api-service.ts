@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 
 // Define API platform type
@@ -391,7 +390,7 @@ export const AQIDataService = {
         
         // Extract location and city information
         const fullLocationName = aqicnData.city?.name || city;
-        const specificLocation = fullLocationName.split(',')[0] || '';
+        const specificLocation = fullLocationName.split(',')[0].trim() || '';
         const baseCity = extractBaseCity(fullLocationName);
         
         // Extract pollutant data
@@ -442,6 +441,49 @@ export const AQIDataService = {
             aqi: historicalAqi,
             pollutants: historicalPollutants
           });
+        }
+        
+        // Add forecast data from the API response if available
+        if (aqicnData.forecast && aqicnData.forecast.daily) {
+          const forecastTypes = Object.keys(aqicnData.forecast.daily);
+          
+          if (forecastTypes.includes('pm25')) {
+            const pm25Forecast = aqicnData.forecast.daily.pm25;
+            
+            // Process forecast data for future days (after current date)
+            for (const forecastDay of pm25Forecast) {
+              const forecastDate = new Date(forecastDay.day);
+              const currentDateObj = new Date(currentDate);
+              
+              // Only add future dates that aren't already in our data
+              if (forecastDate > currentDateObj) {
+                // Calculate AQI based on PM2.5 forecast value (simplified estimation)
+                const estimatedAqi = forecastDay.avg; // We use average as a simplification
+                
+                // Create forecast pollutants based on the available forecast data
+                const forecastPollutants: PollutantData = {
+                  pm25: forecastDay.avg,
+                  pm10: forecastTypes.includes('pm10') ? 
+                    aqicnData.forecast.daily.pm10.find((d: any) => d.day === forecastDay.day)?.avg || 0 : 0,
+                  o3: forecastTypes.includes('o3') ? 
+                    aqicnData.forecast.daily.o3.find((d: any) => d.day === forecastDay.day)?.avg || 0 : 0,
+                  no2: 0,
+                  co: 0,
+                  so2: 0,
+                  nh3: 0
+                };
+                
+                dataPoints.push({
+                  date: forecastDay.day,
+                  city: baseCity,
+                  location: specificLocation,
+                  aqi: estimatedAqi,
+                  pollutants: forecastPollutants,
+                  predicted: true
+                });
+              }
+            }
+          }
         }
         
         // Sort by date

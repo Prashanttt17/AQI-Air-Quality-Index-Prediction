@@ -70,6 +70,8 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
   
   // Check if we have specific location data
   const hasLocationData = weekPredictions.length > 0 && weekPredictions[0].location;
+  const locationName = hasLocationData ? weekPredictions[0].location : "";
+  const cityName = weekPredictions.length > 0 ? weekPredictions[0].city : "";
   
   return (
     <Card className={className}>
@@ -79,10 +81,10 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
           {hasLocationData && (
             <div className="flex items-center mt-1">
               <Badge variant="outline" className="text-xs font-normal">
-                {weekPredictions[0].location}
+                {locationName}
               </Badge>
               <span className="text-xs text-muted-foreground ml-2">
-                Location specific data
+                {locationName !== cityName ? `in ${cityName}` : "Location specific data"}
               </span>
             </div>
           )}
