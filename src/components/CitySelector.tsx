@@ -84,11 +84,24 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   
   // Find which state a city belongs to
   const findStateForCity = (city: string): string => {
+    // First check if this is a complex location name (e.g. "Sanjay Palace, Agra")
+    if (city.includes(',')) {
+      const baseCity = city.split(',')[1]?.trim() || city;
+      
+      for (const [state, stateCities] of Object.entries(INDIAN_CITIES_BY_STATE)) {
+        if (stateCities.some(cityName => baseCity.includes(cityName))) {
+          return state;
+        }
+      }
+    }
+    
+    // Then try direct city matching
     for (const [state, stateCities] of Object.entries(INDIAN_CITIES_BY_STATE)) {
-      if (stateCities.includes(city)) {
+      if (stateCities.some(cityName => city.includes(cityName))) {
         return state;
       }
     }
+    
     return "Other";
   };
 

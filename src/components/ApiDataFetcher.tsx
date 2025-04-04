@@ -98,7 +98,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
       
       toast({
         title: "Success",
-        description: `Loaded ${data.length} data points for ${selectedCity} from ${dataSource === 'api' ? selectedPlatform + ' API' : 'sample data'}.`,
+        description: `Loaded ${data.length} data points for ${data[0].location || selectedCity} from ${dataSource === 'api' ? selectedPlatform + ' API' : 'sample data'}.`,
       });
     } catch (error) {
       console.error("Error fetching data:", error);

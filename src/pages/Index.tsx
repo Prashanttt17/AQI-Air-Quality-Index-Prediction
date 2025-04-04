@@ -61,6 +61,30 @@ const Index = () => {
     setRawData([]);
     setPredictions([]);
     setDataLoaded(false);
+    
+    // If a city is already selected, attempt to fetch data with the new platform
+    if (selectedCity !== "Select City") {
+      setTimeout(() => {
+        fetchDataForSelectedCity(selectedCity, selectedState, platform);
+      }, 300); // Small delay to ensure state updates first
+    }
+  };
+  
+  // Function to fetch data for a selected city
+  const fetchDataForSelectedCity = async (city: string, state: string, platform: ApiPlatform = selectedApiPlatform) => {
+    if (city === "Select City") return;
+    
+    try {
+      const apiKey = getApiKey(platform);
+      if (apiKey) {
+        const data = await AQIDataService.fetchAQIData(city, state, undefined, platform);
+        if (data && data.length > 0) {
+          handleDataLoaded(data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching data for city:", error);
+    }
   };
   
   // Handle city selection
@@ -76,18 +100,8 @@ const Index = () => {
       setWeeklyAvgAQI(0);
       setDataLoaded(false);
     } else {
-      // Automatically fetch data for the selected city for both API platforms
-      try {
-        const apiKey = getApiKey(selectedApiPlatform);
-        if (apiKey) {
-          const data = await AQIDataService.fetchAQIData(city, undefined, undefined, selectedApiPlatform);
-          if (data && data.length > 0) {
-            handleDataLoaded(data);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching data for city:", error);
-      }
+      // Automatically fetch data for the selected city for current API platform
+      fetchDataForSelectedCity(city, selectedState);
     }
   };
   
@@ -131,9 +145,11 @@ const Index = () => {
     setRawData(validData);
     setDataLoaded(true);
     
-    // Extract unique cities
-    const uniqueCities = [...new Set(validData.map(item => item.city))];
-    setCities(uniqueCities);
+    // Extract unique cities with location information if available
+    const uniqueCitiesWithLocation = [...new Set(
+      validData.map(item => item.location ? `${item.location}, ${item.city}` : item.city)
+    )];
+    setCities(uniqueCitiesWithLocation);
   };
   
   // Update predictions when model, city, or data changes
@@ -147,8 +163,16 @@ const Index = () => {
       return;
     }
     
-    // Filter data for selected city
-    const cityData = rawData.filter(item => item.city === selectedCity);
+    // Filter data for selected city, including checking both city and location fields
+    const cityData = rawData.filter(item => {
+      const itemCity = item.city;
+      const itemLocation = item.location;
+      
+      // Check if the item matches either the direct city name or the location-city combination
+      return itemCity === selectedCity || 
+             (itemLocation && `${itemLocation}, ${itemCity}` === selectedCity) ||
+             (selectedCity.includes(itemCity)); // Also match if selected city contains the base city name
+    });
     
     if (cityData.length === 0) {
       setPredictions([]);
