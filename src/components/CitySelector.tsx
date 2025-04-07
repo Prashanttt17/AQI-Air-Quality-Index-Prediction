@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
@@ -12,8 +11,8 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { extractBaseCity } from '@/utils/api-service';
 
-// Updated organizational structure: cities grouped by states in alphabetical order
 const INDIAN_CITIES_BY_STATE: Record<string, string[]> = {
   "Andaman and Nicobar Islands": ["Port Blair"],
   "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore"],
@@ -52,7 +51,6 @@ const INDIAN_CITIES_BY_STATE: Record<string, string[]> = {
   "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri"]
 };
 
-// Flatten the cities array for backward compatibility
 const ALL_INDIAN_CITIES = Object.values(INDIAN_CITIES_BY_STATE).flat().sort();
 
 interface CitySelectorProps {
@@ -60,7 +58,6 @@ interface CitySelectorProps {
   selectedCity: string;
   onCityChange: (city: string) => void;
   className?: string;
-  // Add these new props for state persistence
   selectedState: string;
   onStateChange: (state: string) => void;
 }
@@ -73,60 +70,50 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   selectedState,
   onStateChange
 }) => {
-  // Combine both predefined cities and API-provided cities
   const allCities = React.useMemo(() => {
-    // Create a set from our ALL_INDIAN_CITIES list and API-provided cities
     const combinedCities = new Set([...ALL_INDIAN_CITIES, ...cities]);
-    
-    // Return sorted array
     return Array.from(combinedCities).sort();
   }, [cities]);
   
-  // Find which state a city belongs to
   const findStateForCity = (city: string): string => {
-    // First check if this is a complex location name (e.g. "Sanjay Palace, Agra" or "Sector 22, India")
     if (city.includes(',')) {
       const parts = city.split(',');
-      // Try to match the last part which typically contains the main city name
       const baseCity = parts[parts.length - 1]?.trim() || city;
-      
-      // Now try to match this base city name with our known cities
       for (const [state, stateCities] of Object.entries(INDIAN_CITIES_BY_STATE)) {
         if (stateCities.some(cityName => baseCity.includes(cityName))) {
           return state;
         }
       }
     }
-    
-    // Then try direct city matching
     for (const [state, stateCities] of Object.entries(INDIAN_CITIES_BY_STATE)) {
       if (stateCities.some(cityName => city.includes(cityName))) {
         return state;
       }
     }
-    
     return "Other";
   };
 
-  // Extract the main city name from a location string
   const extractMainCity = (locationString: string): string => {
     if (!locationString || locationString === "Select City") return locationString;
-    
-    // If it's a location string like "Sector 22, India", extract "India" as main city
     if (locationString.includes(',')) {
-      const parts = locationString.split(',');
-      // Get the last part which typically contains the main city name
-      return parts[parts.length - 1].trim();
+      return extractBaseCity(locationString);
     }
-    
     return locationString;
   };
-  
-  // Group cities by state for display
+
+  const getDisplayCityName = (cityName: string): string => {
+    if (cityName === "Select City") return cityName;
+    if (cityName.includes(',')) {
+      const baseCity = extractMainCity(cityName);
+      if (baseCity && baseCity !== cityName && ALL_INDIAN_CITIES.includes(baseCity)) {
+        return `${cityName} (${baseCity})`;
+      }
+    }
+    return cityName;
+  };
+
   const citiesByState = React.useMemo(() => {
     const grouped: Record<string, string[]> = {"All States": ["Select City"]};
-    
-    // Merge API-provided cities with our predefined list
     allCities.forEach(city => {
       const state = findStateForCity(city);
       if (!grouped[state]) {
@@ -134,21 +121,16 @@ const CitySelector: React.FC<CitySelectorProps> = ({
       }
       grouped[state].push(city);
     });
-    
-    // Sort cities within each state
     Object.keys(grouped).forEach(state => {
       grouped[state].sort();
     });
-    
     return grouped;
   }, [allCities]);
   
-  // Get list of all states in alphabetical order
   const statesList = React.useMemo(() => {
     return ["All States", ...Object.keys(INDIAN_CITIES_BY_STATE)].sort();
   }, []);
   
-  // Cities to display based on selected state
   const filteredCities = React.useMemo(() => {
     if (selectedState === "All States") {
       return ["Select City", ...allCities];
@@ -156,12 +138,10 @@ const CitySelector: React.FC<CitySelectorProps> = ({
     return ["Select City", ...(citiesByState[selectedState] || [])];
   }, [selectedState, citiesByState, allCities]);
 
-  // Set appropriate city when state changes
   useEffect(() => {
     if (selectedCity !== "Select City") {
       const cityState = findStateForCity(selectedCity);
       if (cityState !== selectedState && cityState !== "Other") {
-        // If city belongs to a different state, update state selection
         if (selectedState !== cityState) {
           onStateChange(cityState);
         }
@@ -179,7 +159,6 @@ const CitySelector: React.FC<CitySelectorProps> = ({
       </CardHeader>
       <CardContent className="flex-1 px-4 pb-4 pt-0 overflow-hidden flex flex-col">
         <div className="space-y-4 flex-1 flex flex-col">
-          {/* State selection dropdown */}
           <div className="flex-shrink-0">
             <label className="text-sm font-medium mb-1.5 block text-muted-foreground">
               State/Territory
@@ -203,7 +182,6 @@ const CitySelector: React.FC<CitySelectorProps> = ({
             </Select>
           </div>
           
-          {/* City selection dropdown */}
           <div className="flex-1 min-h-0 flex flex-col">
             <label className="text-sm font-medium mb-1.5 block text-muted-foreground flex-shrink-0">
               City
@@ -214,13 +192,15 @@ const CitySelector: React.FC<CitySelectorProps> = ({
                 onValueChange={onCityChange}
               >
                 <SelectTrigger className="w-full h-9 text-sm">
-                  <SelectValue placeholder="Select city" />
+                  <SelectValue placeholder="Select city">
+                    {selectedCity !== "Select City" ? getDisplayCityName(selectedCity) : "Select city"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
                   <ScrollArea className="h-[200px]">
                     {filteredCities.map(city => (
                       <SelectItem key={city} value={city} className="text-sm">
-                        {city}
+                        {getDisplayCityName(city)}
                       </SelectItem>
                     ))}
                   </ScrollArea>

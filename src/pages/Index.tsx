@@ -76,10 +76,22 @@ const Index = () => {
   // Function to display city and location properly
   const getDisplayLocation = (cityWithLocation: string, city: string, location?: string) => {
     if (location) {
+      // For AQICN data, we want to show the user-selected city when possible
+      if (selectedApiPlatform === 'aqicn' && selectedCity !== "Select City") {
+        const baseCity = extractBaseCity(selectedCity);
+        if (baseCity && city.includes(baseCity)) {
+          return `${location}, ${baseCity}`;
+        }
+      }
       return `${location}, ${city}`;
     }
     
     if (cityWithLocation && cityWithLocation.includes(',')) {
+      // For AQICN data like "Sector 22, India", extract the main city
+      if (selectedApiPlatform === 'aqicn') {
+        const baseCity = extractBaseCity(cityWithLocation);
+        return baseCity;
+      }
       return cityWithLocation;
     }
     
@@ -193,6 +205,18 @@ const Index = () => {
   // Preserve tab selection
   const handleTabChange = (value: string) => {
     setSelectedTab(value);
+    
+    // If we're coming back to the dashboard, ensure the city display is correct
+    if (value === 'dashboard' && dataLoaded && rawData.length > 0 && selectedCity !== "Select City") {
+      // No need to reload data, just make sure the city is displayed correctly
+      if (selectedApiPlatform === 'aqicn' && selectedCity.includes(',')) {
+        const baseCity = extractBaseCity(selectedCity);
+        if (baseCity && baseCity !== selectedCity && rawData[0] && rawData[0].city.includes(baseCity)) {
+          // Update the display of the city, but don't actually change the selection
+          console.log("Preserving selected city on tab change:", selectedCity, baseCity);
+        }
+      }
+    }
   };
   
   // Update predictions when model, city, or data changes
@@ -322,6 +346,14 @@ const Index = () => {
   const getAqiCardLocation = () => {
     if (!selectedCity || selectedCity === "Select City") {
       return "Select a city to view data";
+    }
+    
+    // Handle AQICN specific format
+    if (selectedApiPlatform === 'aqicn' && selectedCity.includes(',')) {
+      const baseCity = extractBaseCity(selectedCity);
+      if (baseCity && baseCity !== selectedCity) {
+        return `Latest recorded value for ${baseCity}`;
+      }
     }
     
     // Check if it's a location-specific format like "Sector 22, India"

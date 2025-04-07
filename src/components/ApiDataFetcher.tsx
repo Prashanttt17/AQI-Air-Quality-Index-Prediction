@@ -27,6 +27,13 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded, selectedC
     
     // For AQICN data that might have format like "Sector 22, India"
     if (cityWithLocation.includes(',')) {
+      // Extract only the base city name for better display
+      if (selectedPlatform === 'aqicn') {
+        const baseCity = extractBaseCity(cityWithLocation);
+        if (baseCity !== cityWithLocation) {
+          return baseCity; // Return the extracted base city name
+        }
+      }
       // For display purposes in the UI, we want to show both parts
       return cityWithLocation;
     }
@@ -61,7 +68,12 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded, selectedC
       // Determine location text for message
       let locationText = getDisplayCityName(selectedCity);
       if (data && data.length > 0 && data[0].location) {
-        locationText = `${data[0].location}, ${data[0].city}`;
+        if (selectedPlatform === 'aqicn') {
+          // For AQICN, use the user-selected city name for better UX
+          locationText = `${data[0].location}, ${extractBaseCity(data[0].city)}`;
+        } else {
+          locationText = `${data[0].location}, ${data[0].city}`;
+        }
       }
       
       toast({
