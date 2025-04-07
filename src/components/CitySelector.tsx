@@ -84,10 +84,13 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   
   // Find which state a city belongs to
   const findStateForCity = (city: string): string => {
-    // First check if this is a complex location name (e.g. "Sanjay Palace, Agra")
+    // First check if this is a complex location name (e.g. "Sanjay Palace, Agra" or "Sector 22, India")
     if (city.includes(',')) {
-      const baseCity = city.split(',')[1]?.trim() || city;
+      const parts = city.split(',');
+      // Try to match the last part which typically contains the main city name
+      const baseCity = parts[parts.length - 1]?.trim() || city;
       
+      // Now try to match this base city name with our known cities
       for (const [state, stateCities] of Object.entries(INDIAN_CITIES_BY_STATE)) {
         if (stateCities.some(cityName => baseCity.includes(cityName))) {
           return state;
@@ -105,6 +108,20 @@ const CitySelector: React.FC<CitySelectorProps> = ({
     return "Other";
   };
 
+  // Extract the main city name from a location string
+  const extractMainCity = (locationString: string): string => {
+    if (!locationString || locationString === "Select City") return locationString;
+    
+    // If it's a location string like "Sector 22, India", extract "India" as main city
+    if (locationString.includes(',')) {
+      const parts = locationString.split(',');
+      // Get the last part which typically contains the main city name
+      return parts[parts.length - 1].trim();
+    }
+    
+    return locationString;
+  };
+  
   // Group cities by state for display
   const citiesByState = React.useMemo(() => {
     const grouped: Record<string, string[]> = {"All States": ["Select City"]};

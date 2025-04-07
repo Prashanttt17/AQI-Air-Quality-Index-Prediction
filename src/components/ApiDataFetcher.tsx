@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowDown, CloudSun, Database } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { generateSampleData } from '@/utils/aqi-utils';
-import { AQIDataService, ApiPlatform } from '@/utils/api-service';
+import { AQIDataService, ApiPlatform, extractBaseCity } from '@/utils/api-service';
 
 interface ApiDataFetcherProps {
   onDataLoaded: (data: any) => void;
@@ -19,6 +20,18 @@ interface ApiDataFetcherProps {
 const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded, selectedCity, selectedState, selectedPlatform, disabled = false }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dataSource, setDataSource] = useState<'api' | 'sample'>('api');
+
+  // Function to extract the displayable city name
+  const getDisplayCityName = (cityWithLocation: string) => {
+    if (cityWithLocation === "Select City") return cityWithLocation;
+    
+    // For AQICN data that might have format like "Sector 22, India"
+    if (cityWithLocation.includes(',')) {
+      // For display purposes in the UI, we want to show both parts
+      return cityWithLocation;
+    }
+    return cityWithLocation;
+  };
 
   const handleFetchData = async () => {
     setIsLoading(true);
@@ -46,9 +59,9 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded, selectedC
       onDataLoaded(data);
       
       // Determine location text for message
-      let locationText = selectedCity;
-      if (data && data.length > 0) {
-        locationText = data[0].location ? `${data[0].location}, ${data[0].city}` : selectedCity;
+      let locationText = getDisplayCityName(selectedCity);
+      if (data && data.length > 0 && data[0].location) {
+        locationText = `${data[0].location}, ${data[0].city}`;
       }
       
       toast({
@@ -66,6 +79,9 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded, selectedC
       setIsLoading(false);
     }
   };
+
+  // Get display name for city
+  const displayCityName = getDisplayCityName(selectedCity);
 
   return (
     <Card className="relative">
@@ -104,7 +120,7 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded, selectedC
               <div>
                 <div className="font-medium">Selected City</div>
                 <div className="text-sm text-muted-foreground">
-                  {selectedCity !== "Select City" ? selectedCity : "No city selected"}
+                  {displayCityName !== "Select City" ? displayCityName : "No city selected"}
                 </div>
               </div>
               
@@ -124,11 +140,11 @@ const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ onDataLoaded, selectedC
               <label className="text-sm font-medium block mb-2">City for Sample Data</label>
               <Select defaultValue={selectedCity} disabled={isLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder={selectedCity !== "Select City" ? selectedCity : "Select city for sample data"} />
+                  <SelectValue placeholder={displayCityName !== "Select City" ? displayCityName : "Select city for sample data"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={selectedCity !== "Select City" ? selectedCity : "New Delhi"}>
-                    {selectedCity !== "Select City" ? selectedCity : "New Delhi"}
+                    {displayCityName !== "Select City" ? displayCityName : "New Delhi"}
                   </SelectItem>
                 </SelectContent>
               </Select>

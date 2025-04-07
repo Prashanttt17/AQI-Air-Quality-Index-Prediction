@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
@@ -21,7 +20,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 import { generateSampleData } from '@/utils/aqi-utils';
 import { generateEnhancedPredictions } from '@/utils/enhanced-predictive-models';
-import { AQIDataPoint, getApiKey, AQIDataService, ApiPlatform } from '@/utils/api-service';
+import { AQIDataPoint, getApiKey, AQIDataService, ApiPlatform, extractBaseCity } from '@/utils/api-service';
 
 const Index = () => {
   // State for data management
@@ -34,7 +33,6 @@ const Index = () => {
   const [isPollutantsOpen, setIsPollutantsOpen] = useState<boolean>(false);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [selectedApiPlatform, setSelectedApiPlatform] = useState<ApiPlatform>('airvisual');
-  // Add state selection state
   const [selectedState, setSelectedState] = useState<string>("All States");
   
   // Current, tomorrow, and weekly average AQI values
@@ -73,6 +71,19 @@ const Index = () => {
     setRawData([]);
     setPredictions([]);
     setDataLoaded(false);
+  };
+  
+  // Function to display city and location properly
+  const getDisplayLocation = (cityWithLocation: string, city: string, location?: string) => {
+    if (location) {
+      return `${location}, ${city}`;
+    }
+    
+    if (cityWithLocation && cityWithLocation.includes(',')) {
+      return cityWithLocation;
+    }
+    
+    return city;
   };
   
   // Function to fetch data for a selected city
@@ -125,6 +136,16 @@ const Index = () => {
         variant: "destructive"
       });
       return;
+    }
+    
+    // Extract base city name for matching
+    let baseCity = selectedCity;
+    let selectedLocation = null;
+    
+    if (selectedCity.includes(',')) {
+      const parts = selectedCity.split(',');
+      selectedLocation = parts[0].trim();
+      baseCity = parts[parts.length - 1].trim();
     }
     
     // Ensure all data has the required fields
@@ -185,6 +206,16 @@ const Index = () => {
       return;
     }
     
+    // Extract base city name for matching
+    let baseCity = selectedCity;
+    let selectedLocation = null;
+    
+    if (selectedCity.includes(',')) {
+      const parts = selectedCity.split(',');
+      selectedLocation = parts[0].trim();
+      baseCity = parts[parts.length - 1].trim();
+    }
+    
     // Filter data for selected city, including checking both city and location fields
     const cityData = rawData.filter(item => {
       const itemCity = item.city;
@@ -194,7 +225,7 @@ const Index = () => {
       // Check if the item matches either the direct city name or the location-city combination
       return itemCity === selectedCity || 
              fullItemLocation === selectedCity ||
-             (selectedCity.includes(itemCity)); // Also match if selected city contains the base city name
+             (selectedCity.includes(itemCity) && (!selectedLocation || itemLocation === selectedLocation));
     });
     
     if (cityData.length === 0) {
@@ -235,6 +266,16 @@ const Index = () => {
   const chartData = React.useMemo(() => {
     if (rawData.length === 0 || !selectedCity || selectedCity === "Select City") return [];
     
+    // Extract base city name for matching
+    let baseCity = selectedCity;
+    let selectedLocation = null;
+    
+    if (selectedCity.includes(',')) {
+      const parts = selectedCity.split(',');
+      selectedLocation = parts[0].trim();
+      baseCity = parts[parts.length - 1].trim();
+    }
+    
     // Filter and sort historical data for the selected city
     const cityData = rawData
       .filter(item => {
@@ -245,7 +286,7 @@ const Index = () => {
         // Check if the item matches either the direct city name or the location-city combination
         return itemCity === selectedCity || 
                fullItemLocation === selectedCity ||
-               (selectedCity.includes(itemCity)); // Also match if selected city contains the base city name
+               (selectedCity.includes(itemCity) && (!selectedLocation || itemLocation === selectedLocation));
       })
       .sort((a, b) => {
         const dateA = new Date(a.date).getTime();
@@ -276,6 +317,20 @@ const Index = () => {
     // Combine with predictions
     return [...markedHistoricalData, ...markedPredictions];
   }, [rawData, predictions, selectedCity]);
+  
+  // Get display location for the current AQI card
+  const getAqiCardLocation = () => {
+    if (!selectedCity || selectedCity === "Select City") {
+      return "Select a city to view data";
+    }
+    
+    // Check if it's a location-specific format like "Sector 22, India"
+    if (selectedCity.includes(',')) {
+      return `Latest recorded value for ${selectedCity}`;
+    }
+    
+    return `Latest recorded value for ${selectedCity}`;
+  };
   
   // Check if data is loaded and city is selected
   const isDataReady = dataLoaded && selectedCity !== "Select City";
@@ -324,7 +379,7 @@ const Index = () => {
                 <AQIInfoCard 
                   title="Current AQI"
                   value={currentAQI}
-                  subtitle={selectedCity !== "Select City" ? `Latest recorded value for ${selectedCity}` : "Select a city to view data"}
+                  subtitle={getAqiCardLocation()}
                 />
                 <AQIInfoCard 
                   title="Tomorrow"
