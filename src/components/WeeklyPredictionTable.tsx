@@ -65,8 +65,27 @@ const getPollutantHealth = (pollutant: string): string => {
 };
 
 const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictions, className }) => {
-  // Only show the first 7 days of predictions
-  const weekPredictions = predictions.slice(0, 7);
+  // Make sure we only show prediction items (for next 7 days), not historical data
+  const predictionItems = predictions.filter(item => item.predicted === true);
+  const weekPredictions = predictionItems.slice(0, 7);
+  
+  // If we don't have exactly 7 predicted days, try to fill with the future days from the whole dataset
+  if (weekPredictions.length < 7 && predictions.length > 0) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get all future dates from the dataset
+    const futureDates = predictions.filter(item => {
+      const itemDate = new Date(item.date);
+      itemDate.setHours(0, 0, 0, 0);
+      return itemDate >= today;
+    });
+    
+    // Sort by date and take the first 7
+    futureDates.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    weekPredictions.length = 0; // Clear the array
+    weekPredictions.push(...futureDates.slice(0, 7));
+  }
   
   // Check if we have specific location data
   const hasLocationData = weekPredictions.length > 0 && weekPredictions[0].location;

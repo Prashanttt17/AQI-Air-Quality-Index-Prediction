@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 
 // Define API platform type
@@ -391,7 +392,8 @@ export const AQIDataService = {
       // Process the data from AQICN format to our format
       if (responseData.status === "ok") {
         const aqicnData = responseData.data;
-        const currentDate = new Date().toISOString().split('T')[0];
+        const currentDate = new Date();
+        const currentDateStr = currentDate.toISOString().split('T')[0];
         
         // Create data points for today and historical (need to simulate historical since free tier won't have it)
         const dataPoints: AQIDataPoint[] = [];
@@ -414,7 +416,7 @@ export const AQIDataService = {
         
         // Add current data point with actual AQI from the API
         dataPoints.push({
-          date: currentDate,
+          date: currentDateStr,
           city: baseExtractedCity, // Store the main city name
           location: specificLocation, // Store the specific location
           aqi: aqicnData.aqi,
@@ -423,7 +425,7 @@ export const AQIDataService = {
         
         // Simulate some historical data (last 14 days)
         for (let i = 1; i <= 14; i++) {
-          const pastDate = new Date();
+          const pastDate = new Date(currentDate);
           pastDate.setDate(pastDate.getDate() - i);
           
           // Create a somewhat realistic variation based on current AQI
@@ -459,37 +461,82 @@ export const AQIDataService = {
             const pm25Forecast = aqicnData.forecast.daily.pm25;
             
             // Process forecast data for future days (after current date)
-            for (const forecastDay of pm25Forecast) {
-              const forecastDate = new Date(forecastDay.day);
-              const currentDateObj = new Date(currentDate);
+            for (let i = 0; i < 7; i++) {
+              // Create date for each future day
+              const forecastDate = new Date(currentDate);
+              forecastDate.setDate(forecastDate.getDate() + i + 1); // Start from tomorrow
+              const forecastDateStr = forecastDate.toISOString().split('T')[0];
               
-              // Only add future dates that aren't already in our data
-              if (forecastDate > currentDateObj) {
-                // Calculate AQI based on PM2.5 forecast value (simplified estimation)
-                const estimatedAqi = forecastDay.avg; // We use average as a simplification
-                
-                // Create forecast pollutants based on the available forecast data
-                const forecastPollutants: PollutantData = {
-                  pm25: forecastDay.avg,
-                  pm10: forecastTypes.includes('pm10') ? 
-                    aqicnData.forecast.daily.pm10.find((d: any) => d.day === forecastDay.day)?.avg || 0 : 0,
-                  o3: forecastTypes.includes('o3') ? 
-                    aqicnData.forecast.daily.o3.find((d: any) => d.day === forecastDay.day)?.avg || 0 : 0,
-                  no2: 0,
-                  co: 0,
-                  so2: 0,
-                  nh3: 0
-                };
-                
-                dataPoints.push({
-                  date: forecastDay.day,
-                  city: baseExtractedCity,
-                  location: specificLocation,
-                  aqi: estimatedAqi,
-                  pollutants: forecastPollutants,
-                  predicted: true
-                });
+              // Find the closest forecast day from the API data
+              // This ensures we use forecast data if available, but generate it if not
+              let forecastDay = null;
+              if (pm25Forecast && pm25Forecast.length > 0) {
+                forecastDay = pm25Forecast.find((d: any) => 
+                  new Date(d.day).toISOString().split('T')[0] === forecastDateStr);
               }
+              
+              // Calculate AQI based on PM2.5 forecast value or simulate if not available
+              const baseAqi = aqicnData.aqi;
+              const variation = Math.floor(Math.random() * 25) - 5; // Slight downward trend
+              
+              // Use forecast value if available, otherwise simulate
+              const estimatedAqi = forecastDay 
+                ? forecastDay.avg 
+                : Math.max(0, baseAqi - i * 2 + variation);
+              
+              // Create forecast pollutants based on available data or simulated
+              const forecastPollutants: PollutantData = {
+                pm25: forecastDay ? forecastDay.avg : Math.max(0, pollutants.pm25 - i * 1.5 + Math.floor(Math.random() * 8) - 4),
+                pm10: forecastTypes.includes('pm10') && forecastDay ? 
+                  aqicnData.forecast.daily.pm10.find((d: any) => d.day === forecastDay.day)?.avg || 0 : 
+                  Math.max(0, pollutants.pm10 - i * 2 + Math.floor(Math.random() * 10) - 5),
+                o3: forecastTypes.includes('o3') && forecastDay ? 
+                  aqicnData.forecast.daily.o3.find((d: any) => d.day === forecastDay.day)?.avg || 0 : 
+                  Math.max(0, pollutants.o3 + Math.floor(Math.random() * 6) - 3),
+                no2: Math.max(0, pollutants.no2 - i * 0.5 + Math.floor(Math.random() * 4) - 2),
+                co: Math.max(0, pollutants.co - i * 0.2 + Math.floor(Math.random() * 3) - 1),
+                so2: Math.max(0, pollutants.so2 - i * 0.1 + Math.floor(Math.random() * 2) - 1),
+                nh3: 0
+              };
+              
+              dataPoints.push({
+                date: forecastDateStr,
+                city: baseExtractedCity,
+                location: specificLocation,
+                aqi: estimatedAqi,
+                pollutants: forecastPollutants,
+                predicted: true
+              });
+            }
+          } else {
+            // If no PM2.5 forecast is available, generate predictions for the next 7 days
+            for (let i = 0; i < 7; i++) {
+              const forecastDate = new Date(currentDate);
+              forecastDate.setDate(forecastDate.getDate() + i + 1); // Start from tomorrow
+              
+              // Create a somewhat realistic future trend (slightly decreasing AQI)
+              const baseAqi = aqicnData.aqi;
+              const variation = Math.floor(Math.random() * 25) - 5; // Slight downward trend
+              const predictedAqi = Math.max(0, baseAqi - i * 2 + variation);
+              
+              const predictedPollutants: PollutantData = {
+                pm25: Math.max(0, pollutants.pm25 - i * 1.5 + Math.floor(Math.random() * 8) - 4),
+                pm10: Math.max(0, pollutants.pm10 - i * 2 + Math.floor(Math.random() * 10) - 5),
+                no2: Math.max(0, pollutants.no2 - i * 0.5 + Math.floor(Math.random() * 4) - 2),
+                o3: Math.max(0, pollutants.o3 + Math.floor(Math.random() * 6) - 3),
+                co: Math.max(0, pollutants.co - i * 0.2 + Math.floor(Math.random() * 3) - 1),
+                so2: Math.max(0, pollutants.so2 - i * 0.1 + Math.floor(Math.random() * 2) - 1),
+                nh3: 0
+              };
+              
+              dataPoints.push({
+                date: forecastDate.toISOString().split('T')[0],
+                city: baseExtractedCity,
+                location: specificLocation,
+                aqi: predictedAqi,
+                pollutants: predictedPollutants,
+                predicted: true
+              });
             }
           }
         }
