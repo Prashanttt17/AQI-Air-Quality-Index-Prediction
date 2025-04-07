@@ -48,7 +48,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
-  const chartData = data && data.length > 0 ? data.map(item => {
+  // Ensure both historical and prediction data are properly identified
+  const processedData = data && data.length > 0 ? data.map(item => {
     let formattedDate = item.date;
     if (formattedDate && typeof formattedDate === 'string') {
       try {
@@ -64,10 +65,13 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
       }
     }
     
+    // Ensure predicted flag is set correctly, defaulting to false if not specified
+    const isPredicted = item.predicted === true;
+    
     return {
       date: formattedDate,
       aqi: item.aqi,
-      predicted: item.predicted || false,
+      predicted: isPredicted,
       pollutants: item.pollutants
     };
   }) : [];
@@ -83,7 +87,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
   ];
   
   // Calculate appropriate Y-axis max that aligns with AQI levels
-  const maxAqi = Math.max(...(chartData.length > 0 ? chartData.map(item => item.aqi) : [0]), 250);
+  const maxAqi = Math.max(...(processedData.length > 0 ? processedData.map(item => item.aqi) : [0]), 250);
   
   // Find next threshold above the max AQI
   let yAxisMax = 500; // Default to maximum scale
@@ -97,10 +101,17 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
   // Ensure we always have at least 2 thresholds visible
   if (yAxisMax <= 100) yAxisMax = 150;
   
-  const historicalData = chartData.filter(item => !item.predicted);
-  const predictedData = chartData.filter(item => item.predicted);
+  // Separate historical and prediction data for proper rendering
+  const historicalData = processedData.filter(item => !item.predicted);
+  const predictedData = processedData.filter(item => item.predicted);
   
-  const showPlaceholder = chartData.length === 0;
+  console.log("Chart data breakdown:", {
+    total: processedData.length,
+    historical: historicalData.length,
+    predicted: predictedData.length
+  });
+  
+  const showPlaceholder = processedData.length === 0;
   
   const placeholderData = showPlaceholder ? [
     { date: "Jan 1", aqi: 0 },
@@ -128,7 +139,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 margin={{ top: 15, right: 130, left: 30, bottom: 35 }}
-                data={showPlaceholder ? placeholderData : undefined}
+                data={showPlaceholder ? placeholderData : processedData}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis 
@@ -162,6 +173,7 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   iconSize={10}
                 />
                 
+                {/* Display AQI threshold reference lines */}
                 {thresholds.map(threshold => {
                   // Only show thresholds that are within our current Y axis range
                   if (threshold.value <= yAxisMax) {
@@ -204,35 +216,38 @@ const AQIChart: React.FC<AQIChartProps> = ({ data, className }) => {
                   </text>
                 )}
                 
-                {historicalData.length > 0 && (
-                  <Line
-                    data={historicalData}
-                    type="monotone"
-                    dataKey="aqi"
-                    name="Historical AQI"
-                    stroke="var(--color-historical)"
-                    strokeWidth={2.5}
-                    dot={{ r: 3, strokeWidth: 1.5 }}
-                    activeDot={{ r: 5 }}
-                    isAnimationActive={true}
-                    connectNulls={true}
-                  />
-                )}
-                
-                {predictedData.length > 0 && (
-                  <Line
-                    data={predictedData}
-                    type="monotone"
-                    dataKey="aqi"
-                    name="Predicted AQI"
-                    stroke="var(--color-predicted)"
-                    strokeWidth={3}
-                    strokeDasharray="4 0"
-                    dot={{ r: 3.5, strokeWidth: 2 }}
-                    activeDot={{ r: 5.5 }}
-                    isAnimationActive={true}
-                    connectNulls={true}
-                  />
+                {/* Conditional rendering of data lines */}
+                {!showPlaceholder && (
+                  <>
+                    {/* Historical data line */}
+                    <Line
+                      type="monotone"
+                      dataKey="aqi"
+                      name="Historical AQI"
+                      stroke="var(--color-historical)"
+                      strokeWidth={2.5}
+                      dot={{ r: 3, strokeWidth: 1.5 }}
+                      activeDot={{ r: 5 }}
+                      isAnimationActive={true}
+                      connectNulls={true}
+                      data={historicalData}
+                    />
+                    
+                    {/* Prediction data line */}
+                    <Line
+                      type="monotone"
+                      dataKey="aqi"
+                      name="Predicted AQI"
+                      stroke="var(--color-predicted)"
+                      strokeWidth={3}
+                      strokeDasharray="4 0"
+                      dot={{ r: 3.5, strokeWidth: 2 }}
+                      activeDot={{ r: 5.5 }}
+                      isAnimationActive={true}
+                      connectNulls={true}
+                      data={predictedData}
+                    />
+                  </>
                 )}
               </LineChart>
             </ResponsiveContainer>

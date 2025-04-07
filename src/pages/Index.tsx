@@ -53,6 +53,18 @@ const Index = () => {
     }
   }, [selectedApiPlatform]);
   
+  // Reset location state when API platform changes
+  const handleResetLocationState = () => {
+    setSelectedState("All States");
+    setSelectedCity("Select City");
+    setRawData([]);
+    setPredictions([]);
+    setCurrentAQI(0);
+    setTomorrowAQI(0);
+    setWeeklyAvgAQI(0);
+    setDataLoaded(false);
+  };
+  
   // Handle API platform change
   const handleApiPlatformChange = (platform: ApiPlatform) => {
     setSelectedApiPlatform(platform);
@@ -61,13 +73,6 @@ const Index = () => {
     setRawData([]);
     setPredictions([]);
     setDataLoaded(false);
-    
-    // If a city is already selected, attempt to fetch data with the new platform
-    if (selectedCity !== "Select City") {
-      setTimeout(() => {
-        fetchDataForSelectedCity(selectedCity, selectedState, platform);
-      }, 300); // Small delay to ensure state updates first
-    }
   };
   
   // Function to fetch data for a selected city
@@ -164,6 +169,11 @@ const Index = () => {
     }
   };
   
+  // Preserve tab selection
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value);
+  };
+  
   // Update predictions when model, city, or data changes
   useEffect(() => {
     if (rawData.length === 0 || !selectedCity || selectedCity === "Select City") {
@@ -227,7 +237,16 @@ const Index = () => {
     
     // Filter and sort historical data for the selected city
     const cityData = rawData
-      .filter(item => item.city === selectedCity)
+      .filter(item => {
+        const itemCity = item.city;
+        const itemLocation = item.location;
+        const fullItemLocation = itemLocation ? `${itemLocation}, ${itemCity}` : itemCity;
+        
+        // Check if the item matches either the direct city name or the location-city combination
+        return itemCity === selectedCity || 
+               fullItemLocation === selectedCity ||
+               (selectedCity.includes(itemCity)); // Also match if selected city contains the base city name
+      })
       .sort((a, b) => {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
@@ -242,8 +261,20 @@ const Index = () => {
     // Take only the last 14 days of historical data for the chart
     const recentData = cityData.slice(-14);
     
+    // Mark each historical item
+    const markedHistoricalData = recentData.map(item => ({
+      ...item,
+      predicted: false
+    }));
+    
+    // Mark each prediction item
+    const markedPredictions = predictions.map(item => ({
+      ...item,
+      predicted: true
+    }));
+    
     // Combine with predictions
-    return [...recentData, ...predictions];
+    return [...markedHistoricalData, ...markedPredictions];
   }, [rawData, predictions, selectedCity]);
   
   // Check if data is loaded and city is selected
@@ -259,7 +290,7 @@ const Index = () => {
       </header>
       
       <main className="container py-6 flex-1-safe overflow-hidden">
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full h-full flex flex-col min-h-0">
+        <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full h-full flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-3 mb-6 flex-shrink-0 h-12">
             <TabsTrigger value="dashboard" className="text-base">
               <Gauge className="h-5 w-5 mr-2" />
@@ -446,6 +477,7 @@ const Index = () => {
                 <ApiPlatformSelector
                   selectedPlatform={selectedApiPlatform}
                   onPlatformChange={handleApiPlatformChange}
+                  onResetLocationState={handleResetLocationState}
                 />
                 <ApiKeyManager 
                   selectedPlatform={selectedApiPlatform} 

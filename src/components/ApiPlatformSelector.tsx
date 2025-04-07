@@ -10,13 +10,25 @@ interface ApiPlatformSelectorProps {
   selectedPlatform: ApiPlatform;
   onPlatformChange: (platform: ApiPlatform) => void;
   className?: string;
+  onResetLocationState?: () => void;  // Add this new prop
 }
 
 const ApiPlatformSelector: React.FC<ApiPlatformSelectorProps> = ({
   selectedPlatform,
   onPlatformChange,
-  className
+  className,
+  onResetLocationState
 }) => {
+  // Handle platform change with reset
+  const handlePlatformChange = (value: string) => {
+    const platform = value as ApiPlatform;
+    onPlatformChange(platform);
+    // Reset location state when platform changes
+    if (onResetLocationState) {
+      onResetLocationState();
+    }
+  };
+  
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
@@ -28,7 +40,7 @@ const ApiPlatformSelector: React.FC<ApiPlatformSelectorProps> = ({
       <CardContent>
         <RadioGroup 
           value={selectedPlatform} 
-          onValueChange={(value) => onPlatformChange(value as ApiPlatform)}
+          onValueChange={handlePlatformChange}
           className="space-y-4"
         >
           <div className="flex items-start space-x-3 p-3 rounded-md border">
