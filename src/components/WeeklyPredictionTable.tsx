@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -64,31 +65,12 @@ const getPollutantHealth = (pollutant: string): string => {
 };
 
 const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictions, className }) => {
-  // Generate the next 7 days starting from the current day
+  // Get the current date to use as the starting point
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
   // Format today's date for comparison
   const todayStr = today.toISOString().split('T')[0];
-  
-  // Generate the next 7 days starting from today
-  const next7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(today);
-    date.setDate(date.getDate() + i + 1); // Start from tomorrow (i+1)
-    return date.toISOString().split('T')[0];
-  });
-  
-  // Find the most recent actual data point (not predicted)
-  // First, find any data point that matches today's date and is not predicted
-  const todayDataPoint = predictions.find(dp => 
-    dp.date === todayStr && !dp.predicted
-  );
-  
-  // Create a map of existing predictions by date for quick lookup
-  const predictionsByDate = new Map();
-  predictions.forEach(pred => {
-    predictionsByDate.set(pred.date, pred);
-  });
   
   // Find the current day's actual AQI (what's shown in Current AQI card)
   const currentAQIDataPoints = predictions.filter(dp => !dp.predicted)
@@ -96,20 +78,43 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
   
   const currentAQIDataPoint = currentAQIDataPoints.length > 0 ? currentAQIDataPoints[0] : null;
   
+  // Create a map of existing predictions by date for quick lookup
+  const predictionsByDate = new Map();
+  predictions.forEach(pred => {
+    predictionsByDate.set(pred.date, pred);
+  });
+  
   // Generate final predictions ensuring we use actual data when available
   const finalPredictions = [];
   
-  // If we have today's actual data, add it first
+  // First, add today with the current AQI value
   if (currentAQIDataPoint) {
     finalPredictions.push({
       ...currentAQIDataPoint,
       date: todayStr,
       predicted: false
     });
+  } else {
+    // If no current data found, still add today but mark as predicted
+    const templatePrediction = predictions.length > 0 ? {...predictions[0]} : {
+      date: todayStr,
+      city: '',
+      aqi: 0,
+      pollutants: {
+        pm25: 0, pm10: 0, no2: 0, o3: 0, co: 0, so2: 0, nh3: 0
+      }
+    };
+    
+    finalPredictions.push({
+      ...templatePrediction,
+      date: todayStr,
+      predicted: true,
+      aqi: templatePrediction.aqi || 0
+    });
   }
   
-  // Then add the next 6 days (to make 7 days total including today)
-  for (let i = 1; i < 7; i++) {
+  // Then add the next 6 days to make a total of 7 days
+  for (let i = 1; i <= 6; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
     const dateStr = date.toISOString().split('T')[0];
@@ -130,11 +135,15 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
     let minTimeDiff = Infinity;
     
     for (const pred of predictions) {
-      const predDate = new Date(pred.date).getTime();
-      const timeDiff = Math.abs(predDate - targetDate);
-      if (timeDiff < minTimeDiff) {
-        minTimeDiff = timeDiff;
-        closestPrediction = pred;
+      if (pred.date) {
+        const predDate = new Date(pred.date).getTime();
+        if (!isNaN(predDate)) {
+          const timeDiff = Math.abs(predDate - targetDate);
+          if (timeDiff < minTimeDiff) {
+            minTimeDiff = timeDiff;
+            closestPrediction = pred;
+          }
+        }
       }
     }
     
