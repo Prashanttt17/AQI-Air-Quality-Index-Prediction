@@ -65,15 +65,28 @@ const getPollutantHealth = (pollutant: string): string => {
 };
 
 const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictions, className }) => {
-  // Generate the next 7 days starting from the current day
+  // Get the current date to use as the starting point for our 7-day forecast
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
+  // Format today's date for comparison
+  const todayStr = today.toISOString().split('T')[0];
+  
+  // Generate the next 7 days starting from today
   const next7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(today);
-    date.setDate(date.getDate() + i + 1); // Start from tomorrow (i+1)
+    date.setDate(date.getDate() + i); // Start from today (i+0)
     return date.toISOString().split('T')[0];
   });
+  
+  // Find the most recent actual data point (today or the most recent day)
+  // Sort by date in descending order to find the most recent actual data
+  const sortedData = [...predictions].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
+  // Get the most recent historical data point (not predicted)
+  const currentAQIDataPoint = sortedData.find(dp => !dp.predicted);
   
   // Create a map of existing predictions by date for quick lookup
   const predictionsByDate = new Map();
@@ -81,14 +94,23 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
     predictionsByDate.set(pred.date, pred);
   });
   
-  // First, try to find direct matches for our next 7 days
+  // Generate final predictions ensuring we use actual data when available
   const finalPredictions = next7Days.map(dateStr => {
     // If we have a prediction for this exact date, use it
     if (predictionsByDate.has(dateStr)) {
       const prediction = predictionsByDate.get(dateStr);
       return {
         ...prediction,
-        predicted: true
+        predicted: prediction.predicted || dateStr !== todayStr // Only today's value should be marked as not predicted if it's actual data
+      };
+    }
+    
+    // If this is today and we have current data, use that
+    if (dateStr === todayStr && currentAQIDataPoint) {
+      return {
+        ...currentAQIDataPoint,
+        date: todayStr,
+        predicted: false // Mark as not predicted since it's actual data
       };
     }
     
