@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AQIDataPoint } from '@/utils/api-service';
@@ -65,124 +64,131 @@ const getPollutantHealth = (pollutant: string): string => {
 };
 
 const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictions, className }) => {
-  // Get the current date to use as the starting point
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  // Format today's date for comparison
-  const todayStr = today.toISOString().split('T')[0];
-  
-  // Find the current day's actual AQI (what's shown in Current AQI card)
-  const currentAQIDataPoints = predictions.filter(dp => !dp.predicted)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  
-  const currentAQIDataPoint = currentAQIDataPoints.length > 0 ? currentAQIDataPoints[0] : null;
-  
-  // Create a map of existing predictions by date for quick lookup
-  const predictionsByDate = new Map();
-  predictions.forEach(pred => {
-    predictionsByDate.set(pred.date, pred);
-  });
-  
-  // Generate final predictions ensuring we use actual data when available
-  const finalPredictions = [];
-  
-  // First, add today with the current AQI value
-  if (currentAQIDataPoint) {
-    finalPredictions.push({
-      ...currentAQIDataPoint,
-      date: todayStr,
-      predicted: false
-    });
-  } else {
-    // If no current data found, still add today but mark as predicted
-    const templatePrediction = predictions.length > 0 ? {...predictions[0]} : {
-      date: todayStr,
-      city: '',
-      aqi: 0,
-      pollutants: {
-        pm25: 0, pm10: 0, no2: 0, o3: 0, co: 0, so2: 0, nh3: 0
-      }
-    };
+  // Create a memoized version of finalPredictions to prevent recalculation on re-renders
+  // This will help fix the issue of values changing when clicking on pollutant levels
+  const finalPredictions = useMemo(() => {
+    // Get the current date to use as the starting point
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    finalPredictions.push({
-      ...templatePrediction,
-      date: todayStr,
-      predicted: true,
-      aqi: templatePrediction.aqi || 0
-    });
-  }
-  
-  // Then add the next 6 days to make a total of 7 days
-  for (let i = 1; i <= 6; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() + i);
-    const dateStr = date.toISOString().split('T')[0];
+    // Format today's date for comparison
+    const todayStr = today.toISOString().split('T')[0];
     
-    // If we have a prediction for this exact date, use it
-    if (predictionsByDate.has(dateStr)) {
-      const prediction = predictionsByDate.get(dateStr);
-      finalPredictions.push({
-        ...prediction,
-        predicted: true
+    // Find the current day's actual AQI (what's shown in Current AQI card)
+    const currentAQIDataPoints = predictions.filter(dp => !dp.predicted)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    const currentAQIDataPoint = currentAQIDataPoints.length > 0 ? currentAQIDataPoints[0] : null;
+    
+    // Create a map of existing predictions by date for quick lookup
+    const predictionsByDate = new Map();
+    predictions.forEach(pred => {
+      predictionsByDate.set(pred.date, pred);
+    });
+    
+    // Generate final predictions ensuring we use actual data when available
+    const result = [];
+    
+    // First, add today with the current AQI value
+    if (currentAQIDataPoint) {
+      // Important: Use the most recent actual data point but with today's date
+      result.push({
+        ...currentAQIDataPoint,
+        date: todayStr,
+        predicted: false
       });
-      continue;
+    } else {
+      // If no current data found, still add today but mark as predicted
+      const templatePrediction = predictions.length > 0 ? {...predictions[0]} : {
+        date: todayStr,
+        city: '',
+        aqi: 0,
+        pollutants: {
+          pm25: 0, pm10: 0, no2: 0, o3: 0, co: 0, so2: 0, nh3: 0
+        }
+      };
+      
+      result.push({
+        ...templatePrediction,
+        date: todayStr,
+        predicted: true,
+        aqi: templatePrediction.aqi || 0
+      });
     }
     
-    // Otherwise, try to find the closest prediction to use as a template
-    const targetDate = new Date(dateStr).getTime();
-    let closestPrediction = null;
-    let minTimeDiff = Infinity;
-    
-    for (const pred of predictions) {
-      if (pred.date) {
-        const predDate = new Date(pred.date).getTime();
-        if (!isNaN(predDate)) {
-          const timeDiff = Math.abs(predDate - targetDate);
-          if (timeDiff < minTimeDiff) {
-            minTimeDiff = timeDiff;
-            closestPrediction = pred;
+    // Then add the next 6 days to make a total of 7 days
+    for (let i = 1; i <= 6; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // If we have a prediction for this exact date, use it
+      if (predictionsByDate.has(dateStr)) {
+        const prediction = predictionsByDate.get(dateStr);
+        result.push({
+          ...prediction,
+          predicted: true
+        });
+        continue;
+      }
+      
+      // Otherwise, try to find the closest prediction to use as a template
+      const targetDate = new Date(dateStr).getTime();
+      let closestPrediction = null;
+      let minTimeDiff = Infinity;
+      
+      for (const pred of predictions) {
+        if (pred.date) {
+          const predDate = new Date(pred.date).getTime();
+          if (!isNaN(predDate)) {
+            const timeDiff = Math.abs(predDate - targetDate);
+            if (timeDiff < minTimeDiff) {
+              minTimeDiff = timeDiff;
+              closestPrediction = pred;
+            }
           }
         }
       }
+      
+      // Use the closest prediction as template if available, otherwise create empty one
+      const templatePrediction = closestPrediction || {
+        date: '',
+        city: '',
+        aqi: 0,
+        pollutants: {
+          pm25: 0,
+          pm10: 0,
+          no2: 0,
+          o3: 0,
+          co: 0,
+          so2: 0,
+          nh3: 0
+        }
+      };
+      
+      // Generate a prediction for this date
+      result.push({
+        ...templatePrediction,
+        date: dateStr,
+        predicted: true,
+        // Add small random variation to make it look realistic
+        aqi: closestPrediction 
+          ? Math.max(0, Math.round(templatePrediction.aqi * (0.9 + Math.random() * 0.2)))
+          : 0,
+        pollutants: closestPrediction ? {
+          pm25: Math.max(0, Math.round((templatePrediction.pollutants?.pm25 || 0) * (0.9 + Math.random() * 0.2))),
+          pm10: Math.max(0, Math.round((templatePrediction.pollutants?.pm10 || 0) * (0.9 + Math.random() * 0.2))),
+          no2: Math.max(0, Math.round((templatePrediction.pollutants?.no2 || 0) * (0.9 + Math.random() * 0.2))),
+          o3: Math.max(0, Math.round((templatePrediction.pollutants?.o3 || 0) * (0.9 + Math.random() * 0.2))),
+          co: Math.max(0, Math.round((templatePrediction.pollutants?.co || 0) * (0.9 + Math.random() * 0.2))),
+          so2: Math.max(0, Math.round((templatePrediction.pollutants?.so2 || 0) * (0.9 + Math.random() * 0.2))),
+          nh3: Math.max(0, Math.round((templatePrediction.pollutants?.nh3 || 0) * (0.9 + Math.random() * 0.2)))
+        } : templatePrediction.pollutants
+      });
     }
     
-    // Use the closest prediction as template if available, otherwise create empty one
-    const templatePrediction = closestPrediction || {
-      date: '',
-      city: '',
-      aqi: 0,
-      pollutants: {
-        pm25: 0,
-        pm10: 0,
-        no2: 0,
-        o3: 0,
-        co: 0,
-        so2: 0,
-        nh3: 0
-      }
-    };
-    
-    // Generate a prediction for this date
-    finalPredictions.push({
-      ...templatePrediction,
-      date: dateStr,
-      predicted: true,
-      // Add small random variation to make it look realistic
-      aqi: closestPrediction 
-        ? Math.max(0, Math.round(templatePrediction.aqi * (0.9 + Math.random() * 0.2)))
-        : 0,
-      pollutants: closestPrediction ? {
-        pm25: Math.max(0, Math.round((templatePrediction.pollutants?.pm25 || 0) * (0.9 + Math.random() * 0.2))),
-        pm10: Math.max(0, Math.round((templatePrediction.pollutants?.pm10 || 0) * (0.9 + Math.random() * 0.2))),
-        no2: Math.max(0, Math.round((templatePrediction.pollutants?.no2 || 0) * (0.9 + Math.random() * 0.2))),
-        o3: Math.max(0, Math.round((templatePrediction.pollutants?.o3 || 0) * (0.9 + Math.random() * 0.2))),
-        co: Math.max(0, Math.round((templatePrediction.pollutants?.co || 0) * (0.9 + Math.random() * 0.2))),
-        so2: Math.max(0, Math.round((templatePrediction.pollutants?.so2 || 0) * (0.9 + Math.random() * 0.2))),
-        nh3: Math.max(0, Math.round((templatePrediction.pollutants?.nh3 || 0) * (0.9 + Math.random() * 0.2)))
-      } : templatePrediction.pollutants
-    });
-  }
+    return result;
+  }, [predictions]);
   
   // Check if we have specific location data
   const hasLocationData = predictions.length > 0 && predictions[0].location;
