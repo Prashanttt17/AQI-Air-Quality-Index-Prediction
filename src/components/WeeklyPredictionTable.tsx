@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -65,7 +64,7 @@ const getPollutantHealth = (pollutant: string): string => {
 };
 
 const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictions, className }) => {
-  // Get the current date to use as the starting point for our 7-day forecast
+  // Generate the next 7 days starting from the current day
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
@@ -75,18 +74,15 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
   // Generate the next 7 days starting from today
   const next7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(today);
-    date.setDate(date.getDate() + i); // Start from today (i+0)
+    date.setDate(date.getDate() + i + 1); // Start from tomorrow (i+1)
     return date.toISOString().split('T')[0];
   });
   
-  // Find the most recent actual data point (today or the most recent day)
-  // Sort by date in descending order to find the most recent actual data
-  const sortedData = [...predictions].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
+  // Find the most recent actual data point (not predicted)
+  // First, find any data point that matches today's date and is not predicted
+  const todayDataPoint = predictions.find(dp => 
+    dp.date === todayStr && !dp.predicted
   );
-  
-  // Get the most recent historical data point (not predicted)
-  const currentAQIDataPoint = sortedData.find(dp => !dp.predicted);
   
   // Create a map of existing predictions by date for quick lookup
   const predictionsByDate = new Map();
@@ -94,28 +90,41 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
     predictionsByDate.set(pred.date, pred);
   });
   
+  // Find the current day's actual AQI (what's shown in Current AQI card)
+  const currentAQIDataPoints = predictions.filter(dp => !dp.predicted)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  const currentAQIDataPoint = currentAQIDataPoints.length > 0 ? currentAQIDataPoints[0] : null;
+  
   // Generate final predictions ensuring we use actual data when available
-  const finalPredictions = next7Days.map(dateStr => {
+  const finalPredictions = [];
+  
+  // If we have today's actual data, add it first
+  if (currentAQIDataPoint) {
+    finalPredictions.push({
+      ...currentAQIDataPoint,
+      date: todayStr,
+      predicted: false
+    });
+  }
+  
+  // Then add the next 6 days (to make 7 days total including today)
+  for (let i = 1; i < 7; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    const dateStr = date.toISOString().split('T')[0];
+    
     // If we have a prediction for this exact date, use it
     if (predictionsByDate.has(dateStr)) {
       const prediction = predictionsByDate.get(dateStr);
-      return {
+      finalPredictions.push({
         ...prediction,
-        predicted: prediction.predicted || dateStr !== todayStr // Only today's value should be marked as not predicted if it's actual data
-      };
-    }
-    
-    // If this is today and we have current data, use that
-    if (dateStr === todayStr && currentAQIDataPoint) {
-      return {
-        ...currentAQIDataPoint,
-        date: todayStr,
-        predicted: false // Mark as not predicted since it's actual data
-      };
+        predicted: true
+      });
+      continue;
     }
     
     // Otherwise, try to find the closest prediction to use as a template
-    // First, find predictions that are closest to our target date
     const targetDate = new Date(dateStr).getTime();
     let closestPrediction = null;
     let minTimeDiff = Infinity;
@@ -146,7 +155,7 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
     };
     
     // Generate a prediction for this date
-    return {
+    finalPredictions.push({
       ...templatePrediction,
       date: dateStr,
       predicted: true,
@@ -163,8 +172,8 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
         so2: Math.max(0, Math.round((templatePrediction.pollutants?.so2 || 0) * (0.9 + Math.random() * 0.2))),
         nh3: Math.max(0, Math.round((templatePrediction.pollutants?.nh3 || 0) * (0.9 + Math.random() * 0.2)))
       } : templatePrediction.pollutants
-    };
-  });
+    });
+  }
   
   // Check if we have specific location data
   const hasLocationData = predictions.length > 0 && predictions[0].location;
