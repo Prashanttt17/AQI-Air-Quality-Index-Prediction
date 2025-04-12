@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -64,14 +65,13 @@ const getPollutantHealth = (pollutant: string): string => {
 };
 
 const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictions, className }) => {
-  // Generate the next 7 days starting from tomorrow
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
+  // Generate the next 7 days starting from the current day
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   
   const next7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(tomorrow);
-    date.setDate(date.getDate() + i);
+    const date = new Date(today);
+    date.setDate(date.getDate() + i + 1); // Start from tomorrow (i+1)
     return date.toISOString().split('T')[0];
   });
   
@@ -133,13 +133,13 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
         ? Math.max(0, Math.round(templatePrediction.aqi * (0.9 + Math.random() * 0.2)))
         : 0,
       pollutants: closestPrediction ? {
-        pm25: Math.max(0, Math.round(templatePrediction.pollutants?.pm25 || 0 * (0.9 + Math.random() * 0.2))),
-        pm10: Math.max(0, Math.round(templatePrediction.pollutants?.pm10 || 0 * (0.9 + Math.random() * 0.2))),
-        no2: Math.max(0, Math.round(templatePrediction.pollutants?.no2 || 0 * (0.9 + Math.random() * 0.2))),
-        o3: Math.max(0, Math.round(templatePrediction.pollutants?.o3 || 0 * (0.9 + Math.random() * 0.2))),
-        co: Math.max(0, Math.round(templatePrediction.pollutants?.co || 0 * (0.9 + Math.random() * 0.2))),
-        so2: Math.max(0, Math.round(templatePrediction.pollutants?.so2 || 0 * (0.9 + Math.random() * 0.2))),
-        nh3: Math.max(0, Math.round(templatePrediction.pollutants?.nh3 || 0 * (0.9 + Math.random() * 0.2)))
+        pm25: Math.max(0, Math.round((templatePrediction.pollutants?.pm25 || 0) * (0.9 + Math.random() * 0.2))),
+        pm10: Math.max(0, Math.round((templatePrediction.pollutants?.pm10 || 0) * (0.9 + Math.random() * 0.2))),
+        no2: Math.max(0, Math.round((templatePrediction.pollutants?.no2 || 0) * (0.9 + Math.random() * 0.2))),
+        o3: Math.max(0, Math.round((templatePrediction.pollutants?.o3 || 0) * (0.9 + Math.random() * 0.2))),
+        co: Math.max(0, Math.round((templatePrediction.pollutants?.co || 0) * (0.9 + Math.random() * 0.2))),
+        so2: Math.max(0, Math.round((templatePrediction.pollutants?.so2 || 0) * (0.9 + Math.random() * 0.2))),
+        nh3: Math.max(0, Math.round((templatePrediction.pollutants?.nh3 || 0) * (0.9 + Math.random() * 0.2)))
       } : templatePrediction.pollutants
     };
   });
@@ -186,13 +186,17 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
                 if (prediction.pollutants) {
                   const pollutants = prediction.pollutants;
                   const maxPollutant = Object.entries(pollutants).reduce(
-                    (max, [key, value]) => 
-                      (key === 'pm25' && value > max.value / 10) || // Weight PM2.5 higher
-                      (key === 'pm10' && value > max.value / 5) ||  // Weight PM10 higher
-                      (value > max.value) 
-                        ? { name: key, value } 
-                        : max,
-                    { name: 'pm25', value: pollutants.pm25 }
+                    (max, [key, value]) => {
+                      const numValue = typeof value === 'number' ? value : 0;
+                      const maxValue = typeof max.value === 'number' ? max.value : 0;
+                      
+                      if ((key === 'pm25' && numValue > maxValue / 10) || // Weight PM2.5 higher
+                          (key === 'pm10' && numValue > maxValue / 5) ||  // Weight PM10 higher
+                          (numValue > maxValue))  
+                        return { name: key, value: numValue };
+                      return max;
+                    },
+                    { name: 'pm25', value: pollutants.pm25 || 0 }
                   );
                   
                   pollutantValue = maxPollutant.value;
