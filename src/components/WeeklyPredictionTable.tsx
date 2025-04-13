@@ -67,9 +67,9 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
   // Create a memoized version of finalPredictions to prevent recalculation on re-renders
   // This will help fix the issue of values changing when clicking on pollutant levels
   const finalPredictions = useMemo(() => {
-    // Get the current date to use as the starting point
+    // Always use the current real date to ensure consistency
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // No need to set hours to 0, we want the actual current date
     
     // Format today's date for comparison
     const todayStr = today.toISOString().split('T')[0];
@@ -86,41 +86,24 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
       predictionsByDate.set(pred.date, pred);
     });
     
-    // Generate final predictions ensuring we use actual data when available
+    // Generate exactly 7 days starting from today
     const result = [];
     
-    // First, add today with the current AQI value
-    if (currentAQIDataPoint) {
-      // Important: Use the most recent actual data point but with today's date
-      result.push({
-        ...currentAQIDataPoint,
-        date: todayStr,
-        predicted: false
-      });
-    } else {
-      // If no current data found, still add today but mark as predicted
-      const templatePrediction = predictions.length > 0 ? {...predictions[0]} : {
-        date: todayStr,
-        city: '',
-        aqi: 0,
-        pollutants: {
-          pm25: 0, pm10: 0, no2: 0, o3: 0, co: 0, so2: 0, nh3: 0
-        }
-      };
-      
-      result.push({
-        ...templatePrediction,
-        date: todayStr,
-        predicted: true,
-        aqi: templatePrediction.aqi || 0
-      });
-    }
-    
-    // Then add the next 6 days to make a total of 7 days
-    for (let i = 1; i <= 6; i++) {
+    // Generate for 7 days starting from today
+    for (let i = 0; i < 7; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
+      
+      // For today (i === 0), use the current AQI data point if available
+      if (i === 0 && currentAQIDataPoint) {
+        result.push({
+          ...currentAQIDataPoint,
+          date: dateStr,
+          predicted: false
+        });
+        continue;
+      }
       
       // If we have a prediction for this exact date, use it
       if (predictionsByDate.has(dateStr)) {
