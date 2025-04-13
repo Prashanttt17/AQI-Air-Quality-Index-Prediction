@@ -4,11 +4,12 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from 'date-fns';
 import { getAQIColor, getAQICategory, getPollutantHealth } from '@/utils/aqi-helpers';
+import { PollutantData } from '@/utils/api-service';
 
 interface ForecastTableRowProps {
   date: string;
   aqi: number;
-  pollutants: Record<string, number> | null;
+  pollutants: PollutantData | Record<string, number> | null;
 }
 
 // Helper function to format date for display
