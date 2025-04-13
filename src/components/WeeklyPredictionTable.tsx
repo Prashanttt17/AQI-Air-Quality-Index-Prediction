@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -65,11 +66,10 @@ const getPollutantHealth = (pollutant: string): string => {
 
 const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictions, className }) => {
   // Create a memoized version of finalPredictions to prevent recalculation on re-renders
-  // This will help fix the issue of values changing when clicking on pollutant levels
+  // This ensures values stay consistent when interacting with the component
   const finalPredictions = useMemo(() => {
-    // Always use the current real date to ensure consistency
+    // Always get the current real date for today
     const today = new Date();
-    // No need to set hours to 0, we want the actual current date
     
     // Format today's date for comparison
     const todayStr = today.toISOString().split('T')[0];
@@ -89,17 +89,18 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
     // Generate exactly 7 days starting from today
     const result = [];
     
-    // Generate for 7 days starting from today
+    // Generate for 7 days starting from today (April 13) through April 20
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
       
       // For today (i === 0), use the current AQI data point if available
+      // This ensures today's value in the forecast matches the Current AQI card
       if (i === 0 && currentAQIDataPoint) {
         result.push({
           ...currentAQIDataPoint,
-          date: dateStr,
+          date: dateStr,  // Use today's date
           predicted: false
         });
         continue;
