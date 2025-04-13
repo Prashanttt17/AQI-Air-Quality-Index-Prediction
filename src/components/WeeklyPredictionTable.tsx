@@ -75,9 +75,11 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
     const todayStr = today.toISOString().split('T')[0];
     
     // Find the current day's actual AQI (what's shown in Current AQI card)
+    // Important: Sort by date to get the most recent non-predicted data
     const currentAQIDataPoints = predictions.filter(dp => !dp.predicted)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
+    // Get the most recent actual measurement, which should match the Current AQI card
     const currentAQIDataPoint = currentAQIDataPoints.length > 0 ? currentAQIDataPoints[0] : null;
     
     // Create a map of existing predictions by date for quick lookup
@@ -95,9 +97,10 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
       
-      // For today (i === 0), use the current AQI data point if available
-      // This ensures today's value in the forecast matches the Current AQI card
+      // For today (i === 0), ALWAYS use the current AQI data point if available
+      // This ensures today's value in the forecast EXACTLY matches the Current AQI card
       if (i === 0 && currentAQIDataPoint) {
+        // Create a new object with today's date but the current AQI reading
         result.push({
           ...currentAQIDataPoint,
           date: dateStr,  // Use today's date
