@@ -1,3 +1,4 @@
+
 import { AQIDataPoint } from '@/utils/api-service';
 
 // Function to generate the 7-day forecast data
@@ -34,7 +35,7 @@ export const generateForecastData = (predictions: AQIDataPoint[]): AQIDataPoint[
     // For today (i === 0), ALWAYS use the current AQI data point if available
     // This ensures today's value in the forecast EXACTLY matches the Current AQI card
     if (i === 0 && currentAQIDataPoint) {
-      // Create a new object with today's date but the current AQI reading
+      // Create a new object with today's date but use the current AQI reading directly
       result.push({
         ...currentAQIDataPoint,
         date: dateStr,  // Use today's date
