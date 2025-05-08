@@ -12,6 +12,7 @@ import FileUpload from '@/components/FileUpload';
 import ApiDataFetcher from '@/components/ApiDataFetcher';
 import ApiKeyManager from '@/components/ApiKeyManager';
 import ApiPlatformSelector from '@/components/ApiPlatformSelector';
+import BackendSettingsManager from '@/components/BackendSettingsManager';
 import ModelSelector from '@/components/ModelSelector';
 import PollutantsDisplay from '@/components/PollutantsDisplay';
 import CitySelector from '@/components/CitySelector';
@@ -569,6 +570,7 @@ const Index = () => {
                 <ApiKeyManager 
                   selectedPlatform={selectedApiPlatform} 
                 />
+                <BackendSettingsManager />
               </div>
               
               <Card>
