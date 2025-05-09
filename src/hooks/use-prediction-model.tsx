@@ -4,7 +4,7 @@ import { toast } from '@/components/ui/use-toast';
 import { isBackendEnabled } from '@/utils/enhanced-predictive-models';
 import { getBackendSettings } from '@/utils/backend-integration';
 
-type PredictionModel = 'ARIMA' | 'SARIMAX' | 'RandomForest' | 'LSTM';
+type PredictionModel = 'ARIMA' | 'SARIMAX';
 
 interface UsePredictionModelReturn {
   availableModels: PredictionModel[];
@@ -24,30 +24,29 @@ export function usePredictionModel(): UsePredictionModelReturn {
       const backendEnabled = isBackendEnabled();
       setIsBackendConnected(backendEnabled);
 
-      // Add default frontend models
-      let models: PredictionModel[] = ['ARIMA', 'SARIMAX'];
-
+      // We're only supporting ARIMA and SARIMAX models
+      const models: PredictionModel[] = ['ARIMA', 'SARIMAX'];
+      setAvailableModels(models);
+      
       if (backendEnabled) {
         try {
+          // Let's verify backend connection
           const settings = getBackendSettings();
-          // Try to fetch available models from backend
-          const response = await fetch(`${settings.url}/api/models`);
+          const response = await fetch(`${settings.url}/`);
           
           if (response.ok) {
-            const backendModels = await response.json();
-            if (Array.isArray(backendModels)) {
-              // Combine with frontend models ensuring no duplicates
-              models = [...new Set([...models, ...backendModels])] as PredictionModel[];
-            }
-            console.log("Available models from backend:", models);
+            console.log("Backend connection verified");
+            // We successfully connected to the backend
+            toast({
+              title: "Backend Connected",
+              description: "Successfully connected to the ML backend server",
+            });
           }
         } catch (error) {
-          console.error("Failed to fetch models from backend:", error);
+          console.error("Failed to connect to backend:", error);
           // Still using default models, so we don't need to do anything
         }
       }
-
-      setAvailableModels(models);
     };
 
     checkBackendAndModels();

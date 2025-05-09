@@ -143,7 +143,7 @@ const BackendSettingsManager = () => {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            The URL where your AQI backend server is running
+            The URL where your AQI backend server is running (usually http://localhost:8000)
           </p>
         </div>
       </CardContent>
