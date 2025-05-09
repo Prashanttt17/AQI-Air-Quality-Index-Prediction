@@ -5,6 +5,7 @@ import { Gauge, CloudSun, Database, Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import NavLinks from '@/components/NavLinks';
 
 import AQIInfoCard from '@/components/AQIInfoCard';
 import AQIChart from '@/components/AQIChart';
@@ -372,7 +373,10 @@ const Index = () => {
     <div className="flex flex-col min-h-screen-safe bg-background">
       <header className="border-b flex-shrink-0">
         <div className="container py-4 flex justify-between items-center">
-          <h1 className="text-2xl sm:text-3xl font-bold">Air Quality Index (AQI) Prediction Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold">Air Quality Index (AQI) Prediction Dashboard</h1>
+            <NavLinks />
+          </div>
           <ThemeToggle />
         </div>
       </header>
