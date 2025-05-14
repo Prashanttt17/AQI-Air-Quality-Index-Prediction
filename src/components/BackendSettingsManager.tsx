@@ -16,20 +16,31 @@ const BackendSettingsManager = () => {
   const [backendEnabled, setBackendEnabled] = useState(false);
   const [backendUrl, setBackendUrl] = useState('');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
   
   // Load settings on component mount
   useEffect(() => {
     const settings = getBackendSettings();
     setBackendEnabled(settings.enabled);
     setBackendUrl(settings.url);
+    
+    // Check connection status if enabled
+    if (settings.enabled && settings.url) {
+      handleTestConnection(settings.url, false);
+    }
   }, []);
   
   // Save settings when they change
   const handleSaveSettings = () => {
+    // Clean URL (remove trailing slash if present)
+    const cleanedUrl = backendUrl.trim().replace(/\/$/, '');
+    
     saveBackendSettings({
       enabled: backendEnabled,
-      url: backendUrl.trim()
+      url: cleanedUrl
     });
+    
+    setBackendUrl(cleanedUrl);
     
     toast({
       title: "Settings Saved",
@@ -37,53 +48,74 @@ const BackendSettingsManager = () => {
         ? "Backend integration has been enabled"
         : "Backend integration has been disabled",
     });
+    
+    // Test connection after saving if enabled
+    if (backendEnabled && cleanedUrl) {
+      handleTestConnection(cleanedUrl);
+    }
   };
   
   // Test connection to the backend
-  const handleTestConnection = async () => {
-    if (!backendUrl.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a backend URL",
-        variant: "destructive"
-      });
+  const handleTestConnection = async (url = backendUrl, showToast = true) => {
+    if (!url.trim()) {
+      if (showToast) {
+        toast({
+          title: "Error",
+          description: "Please enter a backend URL",
+          variant: "destructive"
+        });
+      }
+      setConnectionStatus('disconnected');
       return;
     }
     
     setIsTestingConnection(true);
     
     try {
-      const response = await fetch(`${backendUrl}/`);
+      console.log(`Testing connection to: ${url}`);
+      const response = await fetch(`${url}/`);
       
       if (response.ok) {
         const data = await response.json();
         
         if (data.message && data.message.includes("AQI Prediction API")) {
-          toast({
-            title: "Connection Successful",
-            description: "Successfully connected to the AQI Prediction backend",
-          });
+          setConnectionStatus('connected');
+          if (showToast) {
+            toast({
+              title: "Connection Successful",
+              description: "Successfully connected to the AQI Prediction backend",
+            });
+          }
         } else {
+          setConnectionStatus('disconnected');
+          if (showToast) {
+            toast({
+              title: "Connection Warning",
+              description: "Connected to a server, but it may not be the correct AQI Prediction backend",
+              variant: "destructive"
+            });
+          }
+        }
+      } else {
+        setConnectionStatus('disconnected');
+        if (showToast) {
           toast({
-            title: "Connection Warning",
-            description: "Connected to a server, but it may not be the correct AQI Prediction backend",
+            title: "Connection Failed",
+            description: `Server responded with status: ${response.status}`,
             variant: "destructive"
           });
         }
-      } else {
-        toast({
-          title: "Connection Failed",
-          description: `Server responded with status: ${response.status}`,
-          variant: "destructive"
-        });
       }
     } catch (error) {
       console.error("Error testing backend connection:", error);
-      toast({
-        title: "Connection Failed",
-        description: "Could not connect to the specified backend server",
-        variant: "destructive"
-      });
+      setConnectionStatus('disconnected');
+      if (showToast) {
+        toast({
+          title: "Connection Failed",
+          description: "Could not connect to the specified backend server",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsTestingConnection(false);
     }
@@ -121,7 +153,7 @@ const BackendSettingsManager = () => {
           <div className="flex gap-2">
             <Input
               id="backend-url"
-              placeholder="http://localhost:8000 or https://yourngrok.url"
+              placeholder="http://localhost:8000 or http://127.0.0.1:8000"
               value={backendUrl}
               onChange={(e) => setBackendUrl(e.target.value)}
               disabled={!backendEnabled}
@@ -129,21 +161,24 @@ const BackendSettingsManager = () => {
             />
             <Button 
               variant="outline" 
-              onClick={handleTestConnection}
+              onClick={() => handleTestConnection()}
               disabled={!backendEnabled || !backendUrl || isTestingConnection}
+              className={connectionStatus === 'connected' ? 'bg-green-100 dark:bg-green-900/30' : ''}
             >
               {isTestingConnection ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Testing...
                 </>
+              ) : connectionStatus === 'connected' ? (
+                'Connected'
               ) : (
                 'Test Connection'
               )}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            The URL where your AQI backend server is running (usually http://localhost:8000)
+            The URL where your AQI backend server is running (usually http://localhost:8000 or http://127.0.0.1:8000)
           </p>
         </div>
       </CardContent>

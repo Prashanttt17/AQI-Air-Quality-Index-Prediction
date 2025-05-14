@@ -72,6 +72,7 @@ export const fetchAQIDataFromBackend = async (
   }
   
   try {
+    console.log(`Fetching AQI data from backend for city: ${city}, state: ${state}`);
     const response = await fetch(`${settings.url}/api/fetch-aqi`, {
       method: 'POST',
       headers: {
@@ -88,10 +89,12 @@ export const fetchAQIDataFromBackend = async (
     
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`Backend API error: ${response.status} - ${errorText}`);
       throw new Error(`Backend API error: ${response.status} - ${errorText}`);
     }
     
     const data: AQIDataPoint[] = await response.json();
+    console.log(`Received ${data.length} data points from backend`);
     return data;
   } catch (error) {
     console.error('Error fetching data from backend:', error);
@@ -118,23 +121,48 @@ export const getPredictionsFromBackend = async (
   }
   
   try {
+    console.log(`Sending prediction request to backend with model: ${modelName}`);
+    console.log(`Backend URL: ${settings.url}/api/predict`);
+    
+    // Clean historical data to ensure it can be properly JSON serialized
+    const cleanedData = historicalData.map(item => {
+      const { date, city, location, aqi, pollutants } = item;
+      return { 
+        date, 
+        city, 
+        location, 
+        aqi,
+        pollutants: pollutants ? {
+          pm25: pollutants.pm25 || 0,
+          pm10: pollutants.pm10 || 0,
+          no2: pollutants.no2 || 0,
+          o3: pollutants.o3 || 0,
+          co: pollutants.co || 0,
+          so2: pollutants.so2 || 0,
+          nh3: pollutants.nh3 || 0
+        } : undefined
+      };
+    });
+    
     const response = await fetch(`${settings.url}/api/predict`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        historical_data: historicalData,
+        historical_data: cleanedData,
         model_name: modelName
-      } as PredictionRequest),
+      }),
     });
     
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`Backend API error: ${response.status} - ${errorText}`);
       throw new Error(`Backend API error: ${response.status} - ${errorText}`);
     }
     
     const predictions: AQIDataPoint[] = await response.json();
+    console.log(`Received ${predictions.length} prediction points from backend`);
     return predictions;
   } catch (error) {
     console.error('Error getting predictions from backend:', error);

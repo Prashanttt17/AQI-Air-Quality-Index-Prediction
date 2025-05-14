@@ -64,14 +64,20 @@ export const generateEnhancedPredictionsAsync = async (
       console.log(`Requesting backend prediction with model: ${modelName}`);
       console.log(`Historical data points: ${historicalData.length}`);
       
+      // Add console logs for debugging
+      console.log("Historical data sample:", historicalData.slice(0, 2));
+      
       // Use the backend for predictions
       const predictions = await getPredictionsFromBackend(historicalData, modelName);
       
       if (!Array.isArray(predictions) || predictions.length === 0) {
+        console.error("Backend returned empty predictions");
         throw new Error("Backend returned empty predictions");
       }
       
       console.log(`Received ${predictions.length} prediction points from backend`);
+      console.log("Prediction sample:", predictions.slice(0, 2));
+      
       return predictions;
     } catch (error) {
       console.error("Backend prediction failed:", error);
@@ -79,7 +85,7 @@ export const generateEnhancedPredictionsAsync = async (
       // Show notification that backend is required
       toast({
         title: "Backend Error",
-        description: "Please ensure your backend server is running correctly.",
+        description: error instanceof Error ? error.message : "Please ensure your backend server is running correctly.",
         variant: "destructive"
       });
       
