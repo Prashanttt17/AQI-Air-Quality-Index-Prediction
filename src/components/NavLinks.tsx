@@ -8,7 +8,7 @@ const NavLinks: React.FC = () => {
     <div className="flex items-center gap-2">
       <Button asChild variant="ghost" size="sm">
         <Link to="/" className="flex items-center gap-2">
-          Dashboard
+          {/* Dashboard text removed */}
         </Link>
       </Button>
     </div>
