@@ -6,7 +6,7 @@ import { toast } from '@/components/ui/use-toast';
 
 /**
  * Generate enhanced AQI predictions based on historical data and specified model
- * This function will use the backend integration if enabled, otherwise fallback to frontend simulation
+ * This function will use the backend integration if enabled, otherwise don't show predictions
  */
 export const generateEnhancedPredictions = (
   historicalData: AQIDataPoint[], 
@@ -15,30 +15,34 @@ export const generateEnhancedPredictions = (
   // Check if backend integration is enabled
   if (isBackendEnabled()) {
     try {
-      console.log("Backend is enabled, but using frontend simulation for sync operation");
-      console.log(`Will attempt async backend call for model: ${modelName}`);
+      console.log("Backend is enabled, attempting backend prediction");
       
       // Trigger the async call but don't wait for it
-      generateEnhancedPredictionsAsync(historicalData, modelName)
-        .then(backendPredictions => {
-          console.log("Received backend predictions:", backendPredictions.length);
-          // We could potentially update state here via a callback
-          // but for now we'll just log the successful retrieval
-        })
-        .catch(err => {
-          console.error("Backend prediction failed silently:", err);
-        });
-      
-      // Return frontend simulation for immediate display
-      return generateForecastData(historicalData);
+      // Instead of showing frontend simulation, we'll wait for backend data
+      return []; // Return empty array initially, will be populated by async call
     } catch (error) {
-      console.error("Frontend simulation fallback:", error);
-      return generateForecastData(historicalData);
+      console.error("Backend integration error:", error);
+      
+      // Show notification that backend is required
+      toast({
+        title: "Backend Integration Required",
+        description: "Please connect the Backend Integration to enable prediction.",
+        variant: "destructive"
+      });
+      
+      return []; // Return empty array to show no predictions
     }
   }
   
-  // Use frontend simulation if backend is not enabled
-  return generateForecastData(historicalData);
+  // If backend is not enabled, show notification
+  toast({
+    title: "Backend Integration Required",
+    description: "Please connect the Backend Integration to enable prediction.",
+    variant: "destructive"
+  });
+  
+  // Return empty array to show no predictions
+  return [];
 };
 
 /**
@@ -70,20 +74,29 @@ export const generateEnhancedPredictionsAsync = async (
       console.log(`Received ${predictions.length} prediction points from backend`);
       return predictions;
     } catch (error) {
-      console.error("Backend prediction failed, falling back to frontend simulation:", error);
+      console.error("Backend prediction failed:", error);
+      
+      // Show notification that backend is required
       toast({
-        title: "Backend Prediction Failed",
-        description: "Using frontend simulation as fallback. Check your backend connection.",
+        title: "Backend Error",
+        description: "Please ensure your backend server is running correctly.",
         variant: "destructive"
       });
       
-      // Fallback to frontend simulation if backend fails
-      return generateForecastData(historicalData);
+      // Return empty array to show no predictions
+      return [];
     }
   }
   
-  // Use frontend simulation if backend is not enabled
-  return generateForecastData(historicalData);
+  // Show notification that backend is required
+  toast({
+    title: "Backend Integration Required",
+    description: "Please connect the Backend Integration to enable prediction.",
+    variant: "destructive"
+  });
+  
+  // Return empty array to show no predictions
+  return [];
 };
 
 /**

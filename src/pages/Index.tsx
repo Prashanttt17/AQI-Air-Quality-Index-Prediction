@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
-import { Gauge, CloudSun, Database, Key } from 'lucide-react';
+import { CloudSun, Database, Key } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -21,7 +21,7 @@ import WeeklyPredictionTable from '@/components/WeeklyPredictionTable';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 import { generateSampleData } from '@/utils/aqi-utils';
-import { generateEnhancedPredictions } from '@/utils/enhanced-predictive-models';
+import { generateEnhancedPredictions, generateEnhancedPredictionsAsync, isBackendEnabled } from '@/utils/enhanced-predictive-models';
 import { AQIDataPoint, getApiKey, AQIDataService, ApiPlatform, extractBaseCity } from '@/utils/api-service';
 
 const Index = () => {
@@ -36,6 +36,7 @@ const Index = () => {
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [selectedApiPlatform, setSelectedApiPlatform] = useState<ApiPlatform>('airvisual');
   const [selectedState, setSelectedState] = useState<string>("All States");
+  const [loadingPredictions, setLoadingPredictions] = useState<boolean>(false);
   
   // Current, tomorrow, and weekly average AQI values
   const [currentAQI, setCurrentAQI] = useState<number>(0);
@@ -265,26 +266,51 @@ const Index = () => {
     // Sort data by date
     cityData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
-    // Generate predictions using the enhanced selected model
-    const newPredictions = generateEnhancedPredictions(cityData, selectedModel);
-    
-    // Preserve location information from original data
-    if (cityData[0].location) {
-      newPredictions.forEach(pred => {
-        pred.location = cityData[0].location;
-      });
-    }
-    
-    setPredictions(newPredictions);
-    
-    // Calculate current, tomorrow, and weekly average AQI
+    // Set current AQI if we have data
     if (cityData.length > 0) {
       setCurrentAQI(cityData[cityData.length - 1].aqi);
-      if (newPredictions.length > 0) {
-        setTomorrowAQI(newPredictions[0].aqi);
-        const weeklySum = newPredictions.reduce((sum, item) => sum + item.aqi, 0);
-        setWeeklyAvgAQI(Math.round(weeklySum / newPredictions.length));
-      }
+    }
+    
+    // Check if backend is enabled
+    if (isBackendEnabled()) {
+      setLoadingPredictions(true);
+      
+      // Use async function to get predictions from backend
+      generateEnhancedPredictionsAsync(cityData, selectedModel)
+        .then(backendPredictions => {
+          if (backendPredictions && backendPredictions.length > 0) {
+            // Preserve location information from original data
+            if (cityData[0].location) {
+              backendPredictions.forEach(pred => {
+                pred.location = cityData[0].location;
+              });
+            }
+            
+            setPredictions(backendPredictions);
+            
+            // Calculate tomorrow and weekly average AQI
+            setTomorrowAQI(backendPredictions[0].aqi);
+            const weeklySum = backendPredictions.reduce((sum, item) => sum + item.aqi, 0);
+            setWeeklyAvgAQI(Math.round(weeklySum / backendPredictions.length));
+          } else {
+            setPredictions([]);
+            setTomorrowAQI(0);
+            setWeeklyAvgAQI(0);
+          }
+          setLoadingPredictions(false);
+        })
+        .catch(error => {
+          console.error("Error getting predictions:", error);
+          setPredictions([]);
+          setTomorrowAQI(0);
+          setWeeklyAvgAQI(0);
+          setLoadingPredictions(false);
+        });
+    } else {
+      // If backend is not enabled, clear predictions
+      setPredictions([]);
+      setTomorrowAQI(0);
+      setWeeklyAvgAQI(0);
     }
   }, [rawData, selectedCity, selectedModel]);
   
@@ -385,7 +411,6 @@ const Index = () => {
         <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full h-full flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-3 mb-6 flex-shrink-0 h-12">
             <TabsTrigger value="dashboard" className="text-base">
-              <Gauge className="h-5 w-5 mr-2" />
               Dashboard
             </TabsTrigger>
             <TabsTrigger value="data" className="text-base">

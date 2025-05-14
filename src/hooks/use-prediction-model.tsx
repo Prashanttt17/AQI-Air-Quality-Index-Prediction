@@ -18,15 +18,11 @@ export function usePredictionModel(): UsePredictionModelReturn {
   const [selectedModel, setSelectedModel] = useState<PredictionModel>('ARIMA');
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
 
-  // Effect to check backend status and available models
+  // Effect to check backend status
   useEffect(() => {
-    const checkBackendAndModels = async () => {
+    const checkBackend = async () => {
       const backendEnabled = isBackendEnabled();
       setIsBackendConnected(backendEnabled);
-
-      // We're only supporting ARIMA and SARIMAX models
-      const models: PredictionModel[] = ['ARIMA', 'SARIMAX'];
-      setAvailableModels(models);
       
       if (backendEnabled) {
         try {
@@ -36,20 +32,27 @@ export function usePredictionModel(): UsePredictionModelReturn {
           
           if (response.ok) {
             console.log("Backend connection verified");
-            // We successfully connected to the backend
+            // Successfully connected to the backend
+            setIsBackendConnected(true);
+          } else {
+            console.error("Backend connection failed with status:", response.status);
+            setIsBackendConnected(false);
             toast({
-              title: "Backend Connected",
-              description: "Successfully connected to the ML backend server",
+              title: "Backend Connection Failed",
+              description: "Please check your backend server and settings.",
+              variant: "destructive"
             });
           }
         } catch (error) {
           console.error("Failed to connect to backend:", error);
-          // Still using default models, so we don't need to do anything
+          setIsBackendConnected(false);
         }
+      } else {
+        setIsBackendConnected(false);
       }
     };
 
-    checkBackendAndModels();
+    checkBackend();
   }, []);
 
   return {
