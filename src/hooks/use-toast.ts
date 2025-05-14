@@ -1,7 +1,8 @@
 
 import {
-  toast,
   useToast as useToastOriginal,
-} from "@/components/ui/use-toast";
+  toast as toastOriginal
+} from "@/components/ui/toast-utils";
 
-export { toast, useToastOriginal as useToast };
+export const toast = toastOriginal;
+export const useToast = useToastOriginal;

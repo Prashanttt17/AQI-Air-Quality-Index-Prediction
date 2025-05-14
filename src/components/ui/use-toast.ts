@@ -1,4 +1,8 @@
 
-import { useToast, toast } from "@/hooks/use-toast";
+import {
+  useToast as useToastHook,
+  toast as toastFunction
+} from "@/components/ui/toast-utils";
 
-export { useToast, toast };
+export const useToast = useToastHook;
+export const toast = toastFunction;
