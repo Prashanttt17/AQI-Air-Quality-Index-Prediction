@@ -35,6 +35,7 @@ export const getBackendSettings = (): BackendSettings => {
  */
 export const saveBackendSettings = (settings: BackendSettings): void => {
   localStorage.setItem('aqi_backend_settings', JSON.stringify(settings));
+  console.log('Backend settings saved:', settings);
 };
 
 /**
@@ -73,6 +74,8 @@ export const fetchAQIDataFromBackend = async (
   
   try {
     console.log(`Fetching AQI data from backend for city: ${city}, state: ${state}`);
+    console.log(`Using backend URL: ${settings.url}/api/fetch-aqi`);
+    
     const response = await fetch(`${settings.url}/api/fetch-aqi`, {
       method: 'POST',
       headers: {
@@ -144,6 +147,12 @@ export const getPredictionsFromBackend = async (
       };
     });
     
+    // Log the request data for debugging
+    console.log('Sending prediction request with data:', {
+      historical_data: cleanedData.length > 0 ? cleanedData.slice(0, 2) : [],
+      model_name: modelName
+    });
+    
     const response = await fetch(`${settings.url}/api/predict`, {
       method: 'POST',
       headers: {
@@ -154,6 +163,9 @@ export const getPredictionsFromBackend = async (
         model_name: modelName
       }),
     });
+    
+    // Log the response status
+    console.log(`Backend prediction response status: ${response.status}`);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -172,5 +184,37 @@ export const getPredictionsFromBackend = async (
       variant: "destructive"
     });
     throw error;
+  }
+};
+
+/**
+ * Test connection to the backend server
+ */
+export const testBackendConnection = async (url: string): Promise<boolean> => {
+  if (!url) return false;
+  
+  try {
+    console.log(`Testing connection to backend: ${url}`);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Add cache control to prevent browser caching
+      cache: 'no-store',
+    });
+    
+    console.log(`Backend connection test response status: ${response.status}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Backend connection test response:', data);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error testing backend connection:', error);
+    return false;
   }
 };

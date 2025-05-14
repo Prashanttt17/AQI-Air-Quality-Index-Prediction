@@ -1,7 +1,7 @@
 
 import { AQIDataPoint } from '@/utils/api-service';
 import { generateForecastData } from '@/utils/forecast-data-helpers';
-import { getBackendSettings, getPredictionsFromBackend } from '@/utils/backend-integration';
+import { getBackendSettings, getPredictionsFromBackend, testBackendConnection } from '@/utils/backend-integration';
 import { toast } from '@/components/ui/use-toast';
 
 /**
@@ -26,7 +26,7 @@ export const generateEnhancedPredictions = (
       // Show notification that backend is required
       toast({
         title: "Backend Integration Required",
-        description: "Please connect the Backend Integration to enable prediction.",
+        description: "Please ensure your backend server is properly configured and running.",
         variant: "destructive"
       });
       
@@ -37,7 +37,7 @@ export const generateEnhancedPredictions = (
   // If backend is not enabled, show notification
   toast({
     title: "Backend Integration Required",
-    description: "Please connect the Backend Integration to enable prediction.",
+    description: "Please enable and configure the Backend Integration to access predictions.",
     variant: "destructive"
   });
   
@@ -56,6 +56,14 @@ export const generateEnhancedPredictionsAsync = async (
   // Check if backend integration is enabled
   if (isBackendEnabled()) {
     try {
+      // First, test the backend connection
+      const settings = getBackendSettings();
+      const isConnected = await testBackendConnection(settings.url);
+      
+      if (!isConnected) {
+        throw new Error("Cannot connect to backend server. Please check if it's running.");
+      }
+      
       // Validate that we have sufficient historical data
       if (!Array.isArray(historicalData) || historicalData.length < 3) {
         throw new Error("Insufficient historical data for prediction");
@@ -82,9 +90,9 @@ export const generateEnhancedPredictionsAsync = async (
     } catch (error) {
       console.error("Backend prediction failed:", error);
       
-      // Show notification that backend is required
+      // Show notification with detailed error message
       toast({
-        title: "Backend Error",
+        title: "Backend Prediction Failed",
         description: error instanceof Error ? error.message : "Please ensure your backend server is running correctly.",
         variant: "destructive"
       });
@@ -97,7 +105,7 @@ export const generateEnhancedPredictionsAsync = async (
   // Show notification that backend is required
   toast({
     title: "Backend Integration Required",
-    description: "Please connect the Backend Integration to enable prediction.",
+    description: "Please enable and configure the Backend Integration to access predictions.",
     variant: "destructive"
   });
   
@@ -106,7 +114,7 @@ export const generateEnhancedPredictionsAsync = async (
 };
 
 /**
- * Check if backend integration is enabled
+ * Check if backend integration is enabled and configured
  */
 export const isBackendEnabled = (): boolean => {
   const settings = getBackendSettings();

@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 import { Server, Loader2 } from 'lucide-react';
-import { getBackendSettings, saveBackendSettings } from '@/utils/backend-integration';
+import { getBackendSettings, saveBackendSettings, testBackendConnection } from '@/utils/backend-integration';
 
 /**
  * Component for managing backend server settings
@@ -22,7 +22,7 @@ const BackendSettingsManager = () => {
   useEffect(() => {
     const settings = getBackendSettings();
     setBackendEnabled(settings.enabled);
-    setBackendUrl(settings.url);
+    setBackendUrl(settings.url || 'http://127.0.0.1:8000');
     
     // Check connection status if enabled
     if (settings.enabled && settings.url) {
@@ -31,9 +31,28 @@ const BackendSettingsManager = () => {
   }, []);
   
   // Save settings when they change
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     // Clean URL (remove trailing slash if present)
     const cleanedUrl = backendUrl.trim().replace(/\/$/, '');
+    
+    // First test the connection before saving
+    if (backendEnabled && cleanedUrl) {
+      setIsTestingConnection(true);
+      const isConnected = await testBackendConnection(cleanedUrl);
+      setIsTestingConnection(false);
+      
+      if (!isConnected) {
+        toast({
+          title: "Connection Failed",
+          description: "Unable to connect to the backend server. Please check the URL and ensure the server is running.",
+          variant: "destructive"
+        });
+        setConnectionStatus('disconnected');
+        return;
+      }
+      
+      setConnectionStatus('connected');
+    }
     
     saveBackendSettings({
       enabled: backendEnabled,
@@ -48,11 +67,6 @@ const BackendSettingsManager = () => {
         ? "Backend integration has been enabled"
         : "Backend integration has been disabled",
     });
-    
-    // Test connection after saving if enabled
-    if (backendEnabled && cleanedUrl) {
-      handleTestConnection(cleanedUrl);
-    }
   };
   
   // Test connection to the backend
@@ -72,36 +86,22 @@ const BackendSettingsManager = () => {
     setIsTestingConnection(true);
     
     try {
-      console.log(`Testing connection to: ${url}`);
-      const response = await fetch(`${url}/`);
+      const isConnected = await testBackendConnection(url);
       
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.message && data.message.includes("AQI Prediction API")) {
-          setConnectionStatus('connected');
-          if (showToast) {
-            toast({
-              title: "Connection Successful",
-              description: "Successfully connected to the AQI Prediction backend",
-            });
-          }
-        } else {
-          setConnectionStatus('disconnected');
-          if (showToast) {
-            toast({
-              title: "Connection Warning",
-              description: "Connected to a server, but it may not be the correct AQI Prediction backend",
-              variant: "destructive"
-            });
-          }
+      if (isConnected) {
+        setConnectionStatus('connected');
+        if (showToast) {
+          toast({
+            title: "Connection Successful",
+            description: "Successfully connected to the AQI Prediction backend",
+          });
         }
       } else {
         setConnectionStatus('disconnected');
         if (showToast) {
           toast({
             title: "Connection Failed",
-            description: `Server responded with status: ${response.status}`,
+            description: "Could not connect to the specified backend server. Make sure it's running and accessible.",
             variant: "destructive"
           });
         }
@@ -126,7 +126,7 @@ const BackendSettingsManager = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Server className="h-6 w-6" />
-          Backend Integration
+          Backend Integration Setup
         </CardTitle>
         <CardDescription>
           Connect to a Python backend running the AQI prediction models
@@ -153,7 +153,7 @@ const BackendSettingsManager = () => {
           <div className="flex gap-2">
             <Input
               id="backend-url"
-              placeholder="http://localhost:8000 or http://127.0.0.1:8000"
+              placeholder="http://127.0.0.1:8000 or http://localhost:8000"
               value={backendUrl}
               onChange={(e) => setBackendUrl(e.target.value)}
               disabled={!backendEnabled}
@@ -178,13 +178,34 @@ const BackendSettingsManager = () => {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            The URL where your AQI backend server is running (usually http://localhost:8000 or http://127.0.0.1:8000)
+            The URL where your AQI backend server is running (usually http://127.0.0.1:8000 or http://localhost:8000)
           </p>
+        </div>
+        
+        <div className="bg-muted p-4 rounded-md">
+          <h3 className="font-medium mb-2">Connection Example</h3>
+          <p className="text-sm mb-2">1. Start the backend server:</p>
+          <pre className="bg-slate-800 text-slate-100 p-2 rounded text-xs overflow-x-auto">
+            cd backend
+            uvicorn main:app --reload
+          </pre>
+          <p className="text-sm mt-3 mb-2">2. Enter the correct URL:</p>
+          <code className="text-xs bg-slate-800 text-slate-100 p-1 rounded">http://127.0.0.1:8000</code>
+          <p className="text-sm mt-3">3. Click "Test Connection" then "Save Settings"</p>
         </div>
       </CardContent>
       
-      <CardFooter>
-        <Button onClick={handleSaveSettings}>Save Settings</Button>
+      <CardFooter className="flex flex-col space-y-4 items-stretch">
+        <Button onClick={handleSaveSettings} className="w-full">Save Settings</Button>
+        <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+          <p className="font-medium">Troubleshooting:</p>
+          <ul className="list-disc pl-4 mt-1">
+            <li>Ensure the backend server is running</li>
+            <li>Check for any CORS issues in browser console</li>
+            <li>Verify the URL is correct (http://127.0.0.1:8000)</li>
+            <li>Try restarting the backend server</li>
+          </ul>
+        </div>
       </CardFooter>
     </Card>
   );
