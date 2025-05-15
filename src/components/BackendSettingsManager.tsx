@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { Server, Loader2 } from 'lucide-react';
+import { Server, Loader2, AlertTriangle } from 'lucide-react';
 import { getBackendSettings, saveBackendSettings, testBackendConnection } from '@/utils/backend-integration';
 
 /**
@@ -17,6 +17,7 @@ const BackendSettingsManager = () => {
   const [backendUrl, setBackendUrl] = useState('');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
+  const [showTimestampWarning, setShowTimestampWarning] = useState(false);
   
   // Load settings on component mount
   useEffect(() => {
@@ -68,6 +69,13 @@ const BackendSettingsManager = () => {
         ? "Backend integration has been enabled"
         : "Backend integration has been disabled",
     });
+    
+    // Show timestamp warning if backend enabled to help troubleshoot
+    if (backendEnabled) {
+      setShowTimestampWarning(true);
+    } else {
+      setShowTimestampWarning(false);
+    }
   };
   
   // Test connection to the backend
@@ -183,6 +191,16 @@ const BackendSettingsManager = () => {
           </p>
         </div>
         
+        {showTimestampWarning && (
+          <div className="bg-amber-100 dark:bg-amber-900/20 p-4 rounded-md flex items-start gap-2 border border-amber-300 dark:border-amber-800">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-sm">Important Note:</h4>
+              <p className="text-xs mt-1">The backend now uses consistent date formatting that should prevent the common "Cannot compare Timestamp with datetime.date" error. If you still experience this error, try restarting both the frontend and backend.</p>
+            </div>
+          </div>
+        )}
+        
         <div className="bg-muted p-4 rounded-md">
           <h3 className="font-medium mb-2">Connection Steps</h3>
           <p className="text-sm mb-2">1. Start the backend server:</p>
@@ -204,10 +222,10 @@ const BackendSettingsManager = () => {
           <ul className="list-disc pl-4 mt-1">
             <li>Ensure backend server is running (check terminal)</li>
             <li>Make sure to copy the exact URL from the terminal (http://127.0.0.1:8000)</li>
-            <li>Check for "Error generating predictions" in backend logs</li>
-            <li>If you see date comparison errors, restart both frontend and backend</li>
-            <li>For timestamp errors, the app has been updated to fix date formatting issues</li>
-            <li>Try restarting both frontend and backend if issues persist</li>
+            <li>If you see "Cannot compare Timestamp with datetime.date" errors in the backend logs, the frontend has been updated to fix this issue</li>
+            <li>For persistent timestamp comparison errors, try restarting both the backend and frontend</li>
+            <li>Check that you're using Python 3.7+ for the backend</li>
+            <li>Make sure all backend dependencies are installed: <code>pip install -r requirements.txt</code></li>
           </ul>
         </div>
       </CardFooter>

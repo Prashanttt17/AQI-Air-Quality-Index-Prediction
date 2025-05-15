@@ -5,6 +5,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { AQIDataPoint } from '@/utils/api-service';
 import ForecastTableRow from './ForecastTableRow';
 import ForecastTableHeader from './ForecastTableHeader';
+import { getBackendSettings } from '@/utils/backend-integration';
 
 interface WeeklyPredictionTableProps {
   predictions: AQIDataPoint[];
@@ -19,6 +20,31 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
   const hasLocationData = predictions.length > 0 && predictions[0].location;
   const locationName = hasLocationData ? predictions[0].location : "";
   const cityName = predictions.length > 0 ? predictions[0].city : "";
+  
+  // Check if backend is connected
+  const backendSettings = useMemo(() => getBackendSettings(), []);
+  const isBackendEnabled = backendSettings.enabled && !!backendSettings.url;
+
+  // If no predictions and backend is enabled, show a message
+  if (finalPredictions.length === 0 && isBackendEnabled) {
+    return (
+      <Card className={className}>
+        <CardHeader className="pb-2">
+          <ForecastTableHeader location={locationName} city={cityName || "Selected City"} />
+        </CardHeader>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">
+            No prediction data available. Please ensure that:
+          </p>
+          <ul className="text-sm mt-2 list-disc text-left pl-8 space-y-1">
+            <li>The backend server is running</li>
+            <li>You've selected a city with sufficient historical data</li>
+            <li>You have proper API keys configured</li>
+          </ul>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>

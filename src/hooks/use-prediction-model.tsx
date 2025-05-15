@@ -36,18 +36,19 @@ export function usePredictionModel(): UsePredictionModelReturn {
           return;
         }
         
+        console.log("Testing backend connection from usePredictionModel hook");
         const connected = await testBackendConnection(settings.url);
         setIsBackendConnected(connected);
         
         if (!connected) {
-          console.error("Backend connection failed");
+          console.error("Backend connection failed in usePredictionModel hook");
           toast({
             title: "Backend Connection Failed",
-            description: "Please check your backend server and settings.",
+            description: "Could not connect to backend server. Make sure it's running properly.",
             variant: "destructive"
           });
         } else {
-          console.log("Backend connection verified");
+          console.log("Backend connection verified in usePredictionModel hook");
         }
       } catch (error) {
         console.error("Failed to connect to backend:", error);

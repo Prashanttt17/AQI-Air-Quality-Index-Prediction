@@ -7,24 +7,25 @@ import { toast } from '@/components/ui/use-toast';
 /**
  * Format a date value to YYYY-MM-DD string format
  */
-const formatToYYYYMMDD = (dateValue: string | Date | unknown): string => {
+const formatToYYYYMMDD = (dateValue: unknown): string => {
+  // Handle Date objects
+  if (dateValue && typeof dateValue === 'object' && 'toISOString' in dateValue && typeof dateValue.toISOString === 'function') {
+    return dateValue.toISOString().split('T')[0];
+  }
+  
+  // Handle string dates
   if (typeof dateValue === 'string') {
-    // Try to parse it as a date and format
     const dateObj = new Date(dateValue);
     if (!isNaN(dateObj.getTime())) {
       return dateObj.toISOString().split('T')[0];
     }
-    // If parsing fails, return the original string
     return dateValue;
-  } 
-  
-  if (dateValue instanceof Date) {
-    return dateValue.toISOString().split('T')[0];
   }
   
   // Try to convert to a date if it's something else
   try {
-    const dateObj = new Date(String(dateValue));
+    const dateStr = String(dateValue);
+    const dateObj = new Date(dateStr);
     if (!isNaN(dateObj.getTime())) {
       return dateObj.toISOString().split('T')[0];
     }
@@ -110,12 +111,9 @@ export const generateEnhancedPredictionsAsync = async (
       // Ensure dates are properly formatted as strings in YYYY-MM-DD format
       // This is critical to fix the timestamp comparison error
       const formattedHistoricalData = historicalData.map(item => {
-        // Get the date as a string in YYYY-MM-DD format using our helper
-        const formattedDate = formatToYYYYMMDD(item.date);
-        
         return {
           ...item,
-          date: formattedDate
+          date: formatToYYYYMMDD(item.date)
         };
       });
       

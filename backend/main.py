@@ -112,6 +112,7 @@ async def predict_aqi(request: PredictionRequest):
         
         # Sort by date
         if not df.empty:
+            # Convert all date strings to pandas datetime format
             df['date'] = pd.to_datetime(df['date'])
             df = df.sort_values('date')
         
@@ -133,8 +134,15 @@ async def predict_aqi(request: PredictionRequest):
                     nh3=float(row["nh3"])
                 )
             
+            date_value = row["date"]
+            # Ensure date is in string format YYYY-MM-DD
+            if isinstance(date_value, (pd.Timestamp, datetime)):
+                formatted_date = date_value.strftime("%Y-%m-%d")
+            else:
+                formatted_date = str(date_value)
+            
             result.append(AQIDataPoint(
-                date=row["date"].strftime("%Y-%m-%d") if isinstance(row["date"], (datetime, pd.Timestamp)) else row["date"],
+                date=formatted_date,
                 city=row["city"],
                 location=row["location"] if "location" in row else None,
                 aqi=float(row["aqi"]),
@@ -183,8 +191,15 @@ async def predict_from_csv(
         # Convert to AQIDataPoint format
         result = []
         for _, row in predictions_df.iterrows():
+            date_value = row["date"]
+            # Ensure date is in string format YYYY-MM-DD
+            if isinstance(date_value, (pd.Timestamp, datetime)):
+                formatted_date = date_value.strftime("%Y-%m-%d")
+            else:
+                formatted_date = str(date_value)
+                
             result.append(AQIDataPoint(
-                date=row["date"].strftime("%Y-%m-%d") if isinstance(row["date"], (datetime, pd.Timestamp)) else row["date"],
+                date=formatted_date,
                 city=row["city"] if "city" in row else city,
                 aqi=float(row[target_column]),
                 predicted=bool(row["predicted"])
@@ -258,7 +273,7 @@ def generate_predictions(df: pd.DataFrame, model_name: str) -> pd.DataFrame:
         if use_time_series:
             # Prepare data for time series modeling
             ts_df = df[["date", "aqi"]].copy()
-            ts_df['date'] = pd.to_datetime(ts_df['date'])
+            # No need to convert to datetime again as we already did this above
             ts_df = ts_df.set_index('date')
             
             # Generate forecasts
@@ -485,3 +500,4 @@ def generate_predictions_from_csv(df: pd.DataFrame, model_name: str, target_col:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
