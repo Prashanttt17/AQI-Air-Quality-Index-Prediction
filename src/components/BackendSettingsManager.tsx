@@ -54,6 +54,7 @@ const BackendSettingsManager = () => {
       setConnectionStatus('connected');
     }
     
+    // Save settings regardless of connection test result
     saveBackendSettings({
       enabled: backendEnabled,
       url: cleanedUrl
@@ -204,7 +205,8 @@ const BackendSettingsManager = () => {
             <li>Ensure backend server is running (check terminal)</li>
             <li>Make sure to copy the exact URL from the terminal (http://127.0.0.1:8000)</li>
             <li>Check for "Error generating predictions" in backend logs</li>
-            <li>If you see date comparison errors, ensure your data has proper date formats</li>
+            <li>If you see date comparison errors, restart both frontend and backend</li>
+            <li>For timestamp errors, the app has been updated to fix date formatting issues</li>
             <li>Try restarting both frontend and backend if issues persist</li>
           </ul>
         </div>

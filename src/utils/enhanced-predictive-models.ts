@@ -75,11 +75,28 @@ export const generateEnhancedPredictionsAsync = async (
       // Add console logs for debugging
       console.log("Historical data sample:", historicalData.slice(0, 2));
       
-      // Ensure dates are properly formatted before sending to backend
+      // Ensure dates are properly formatted as strings in YYYY-MM-DD format
+      // This is critical to fix the timestamp comparison error
       const formattedHistoricalData = historicalData.map(item => {
+        // Get the date as a string in YYYY-MM-DD format
+        let formattedDate: string;
+        
+        if (typeof item.date === 'string') {
+          // If it's already a string, ensure it's in YYYY-MM-DD format
+          const dateObj = new Date(item.date);
+          formattedDate = dateObj.toISOString().split('T')[0];
+        } else if (item.date instanceof Date) {
+          // If it's a Date object, convert to YYYY-MM-DD string
+          formattedDate = item.date.toISOString().split('T')[0];
+        } else {
+          // Fallback for any other case
+          const dateObj = new Date(item.date);
+          formattedDate = dateObj.toISOString().split('T')[0];
+        }
+        
         return {
           ...item,
-          date: typeof item.date === 'string' ? item.date : new Date(item.date).toISOString().split('T')[0]
+          date: formattedDate
         };
       });
       
@@ -104,7 +121,7 @@ export const generateEnhancedPredictionsAsync = async (
           errorMessage.toLowerCase().includes("timestamp")) {
         toast({
           title: "Backend Date Format Error",
-          description: "The backend is having trouble with date formats. Please check the backend logs for details.",
+          description: "There was an issue with date formats. Please try again or contact support.",
           variant: "destructive"
         });
       } else {

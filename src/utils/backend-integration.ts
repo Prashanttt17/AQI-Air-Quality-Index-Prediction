@@ -1,4 +1,3 @@
-
 import { AQIDataPoint, ApiPlatform } from '@/utils/api-service';
 import { toast } from '@/components/ui/use-toast';
 
@@ -128,13 +127,30 @@ export const getPredictionsFromBackend = async (
     console.log(`Backend URL: ${settings.url}/api/predict`);
     
     // Clean historical data to ensure it can be properly JSON serialized
-    // and format dates consistently as YYYY-MM-DD strings
+    // and format all dates consistently as YYYY-MM-DD strings
     const cleanedData = historicalData.map(item => {
       const { date, city, location, aqi, pollutants } = item;
       
-      // Ensure date is in YYYY-MM-DD format
-      const formattedDate = typeof date === 'string' ? date : new Date(date).toISOString().split('T')[0];
+      // Ensure date is formatted as YYYY-MM-DD string
+      let formattedDate: string;
       
+      if (typeof date === 'string') {
+        // Try to standardize the date string format
+        const dateObj = new Date(date);
+        if (!isNaN(dateObj.getTime())) {
+          formattedDate = dateObj.toISOString().split('T')[0];
+        } else {
+          formattedDate = date; // Keep as is if parsing failed
+        }
+      } else if (date instanceof Date) {
+        formattedDate = date.toISOString().split('T')[0];
+      } else {
+        // Try to convert whatever it is to a date
+        const dateObj = new Date(date);
+        formattedDate = dateObj.toISOString().split('T')[0];
+      }
+      
+      // Return a clean object with properly formatted date
       return { 
         date: formattedDate, 
         city, 
@@ -154,7 +170,7 @@ export const getPredictionsFromBackend = async (
     
     // Log the request data for debugging
     console.log('Sending prediction request with data:', {
-      historical_data: cleanedData.length > 0 ? cleanedData.slice(0, 2) : [],
+      historical_data_sample: cleanedData.length > 0 ? cleanedData.slice(0, 2) : [],
       model_name: modelName
     });
     
@@ -182,6 +198,7 @@ export const getPredictionsFromBackend = async (
     
     try {
       predictions = await response.json();
+      console.log("Raw response from backend:", predictions);
     } catch (error) {
       console.error('Error parsing backend response:', error);
       throw new Error('Failed to parse backend response as JSON');
@@ -198,6 +215,37 @@ export const getPredictionsFromBackend = async (
     } else {
       console.log(`Received ${predictions.length} prediction points from backend`);
       console.log("Prediction sample:", predictions.slice(0, 2));
+      
+      // Standardize date formats in the predictions for frontend consistency
+      predictions = predictions.map(prediction => {
+        // Ensure date is a string in YYYY-MM-DD format
+        let formattedDate: string;
+        
+        if (typeof prediction.date === 'string') {
+          // Try to standardize any date string format
+          const dateObj = new Date(prediction.date);
+          if (!isNaN(dateObj.getTime())) {
+            formattedDate = dateObj.toISOString().split('T')[0];
+          } else {
+            formattedDate = prediction.date; // Keep as is if parsing failed
+          }
+        } else if (prediction.date instanceof Date) {
+          formattedDate = prediction.date.toISOString().split('T')[0];
+        } else {
+          // Try to convert whatever it is to a date
+          try {
+            const dateObj = new Date(prediction.date);
+            formattedDate = dateObj.toISOString().split('T')[0];
+          } catch (e) {
+            formattedDate = String(prediction.date); // Fallback
+          }
+        }
+        
+        return {
+          ...prediction,
+          date: formattedDate
+        };
+      });
     }
     
     return predictions;
