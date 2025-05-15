@@ -1,3 +1,4 @@
+
 import { AQIDataPoint, ApiPlatform } from '@/utils/api-service';
 import { toast } from '@/components/ui/use-toast';
 
@@ -110,6 +111,38 @@ export const fetchAQIDataFromBackend = async (
 };
 
 /**
+ * Format a date value to YYYY-MM-DD string format
+ */
+const formatToYYYYMMDD = (dateValue: string | Date | unknown): string => {
+  if (typeof dateValue === 'string') {
+    // Try to parse it as a date and format
+    const dateObj = new Date(dateValue);
+    if (!isNaN(dateObj.getTime())) {
+      return dateObj.toISOString().split('T')[0];
+    }
+    // If parsing fails, return the original string
+    return dateValue;
+  } 
+  
+  if (dateValue instanceof Date) {
+    return dateValue.toISOString().split('T')[0];
+  }
+  
+  // Try to convert to a date if it's something else
+  try {
+    const dateObj = new Date(String(dateValue));
+    if (!isNaN(dateObj.getTime())) {
+      return dateObj.toISOString().split('T')[0];
+    }
+  } catch (e) {
+    // Fallback
+  }
+  
+  // Last resort - convert to string
+  return String(dateValue);
+};
+
+/**
  * Get predictions from the backend API
  */
 export const getPredictionsFromBackend = async (
@@ -131,24 +164,8 @@ export const getPredictionsFromBackend = async (
     const cleanedData = historicalData.map(item => {
       const { date, city, location, aqi, pollutants } = item;
       
-      // Ensure date is formatted as YYYY-MM-DD string
-      let formattedDate: string;
-      
-      if (typeof date === 'string') {
-        // Try to standardize the date string format
-        const dateObj = new Date(date);
-        if (!isNaN(dateObj.getTime())) {
-          formattedDate = dateObj.toISOString().split('T')[0];
-        } else {
-          formattedDate = date; // Keep as is if parsing failed
-        }
-      } else if (date instanceof Date) {
-        formattedDate = date.toISOString().split('T')[0];
-      } else {
-        // Try to convert whatever it is to a date
-        const dateObj = new Date(date);
-        formattedDate = dateObj.toISOString().split('T')[0];
-      }
+      // Ensure date is formatted as YYYY-MM-DD string using our helper
+      const formattedDate = formatToYYYYMMDD(date);
       
       // Return a clean object with properly formatted date
       return { 
@@ -218,28 +235,8 @@ export const getPredictionsFromBackend = async (
       
       // Standardize date formats in the predictions for frontend consistency
       predictions = predictions.map(prediction => {
-        // Ensure date is a string in YYYY-MM-DD format
-        let formattedDate: string;
-        
-        if (typeof prediction.date === 'string') {
-          // Try to standardize any date string format
-          const dateObj = new Date(prediction.date);
-          if (!isNaN(dateObj.getTime())) {
-            formattedDate = dateObj.toISOString().split('T')[0];
-          } else {
-            formattedDate = prediction.date; // Keep as is if parsing failed
-          }
-        } else if (prediction.date instanceof Date) {
-          formattedDate = prediction.date.toISOString().split('T')[0];
-        } else {
-          // Try to convert whatever it is to a date
-          try {
-            const dateObj = new Date(prediction.date);
-            formattedDate = dateObj.toISOString().split('T')[0];
-          } catch (e) {
-            formattedDate = String(prediction.date); // Fallback
-          }
-        }
+        // Use our helper function to format the date
+        const formattedDate = formatToYYYYMMDD(prediction.date);
         
         return {
           ...prediction,
@@ -294,3 +291,4 @@ export const testBackendConnection = async (url: string): Promise<boolean> => {
     return false;
   }
 };
+

@@ -5,6 +5,38 @@ import { getBackendSettings, getPredictionsFromBackend, testBackendConnection } 
 import { toast } from '@/components/ui/use-toast';
 
 /**
+ * Format a date value to YYYY-MM-DD string format
+ */
+const formatToYYYYMMDD = (dateValue: string | Date | unknown): string => {
+  if (typeof dateValue === 'string') {
+    // Try to parse it as a date and format
+    const dateObj = new Date(dateValue);
+    if (!isNaN(dateObj.getTime())) {
+      return dateObj.toISOString().split('T')[0];
+    }
+    // If parsing fails, return the original string
+    return dateValue;
+  } 
+  
+  if (dateValue instanceof Date) {
+    return dateValue.toISOString().split('T')[0];
+  }
+  
+  // Try to convert to a date if it's something else
+  try {
+    const dateObj = new Date(String(dateValue));
+    if (!isNaN(dateObj.getTime())) {
+      return dateObj.toISOString().split('T')[0];
+    }
+  } catch (e) {
+    // Fallback
+  }
+  
+  // Last resort - convert to string
+  return String(dateValue);
+};
+
+/**
  * Generate enhanced AQI predictions based on historical data and specified model
  * This function will use the backend integration if enabled, otherwise don't show predictions
  */
@@ -78,21 +110,8 @@ export const generateEnhancedPredictionsAsync = async (
       // Ensure dates are properly formatted as strings in YYYY-MM-DD format
       // This is critical to fix the timestamp comparison error
       const formattedHistoricalData = historicalData.map(item => {
-        // Get the date as a string in YYYY-MM-DD format
-        let formattedDate: string;
-        
-        if (typeof item.date === 'string') {
-          // If it's already a string, ensure it's in YYYY-MM-DD format
-          const dateObj = new Date(item.date);
-          formattedDate = dateObj.toISOString().split('T')[0];
-        } else if (item.date instanceof Date) {
-          // If it's a Date object, convert to YYYY-MM-DD string
-          formattedDate = item.date.toISOString().split('T')[0];
-        } else {
-          // Fallback for any other case
-          const dateObj = new Date(item.date);
-          formattedDate = dateObj.toISOString().split('T')[0];
-        }
+        // Get the date as a string in YYYY-MM-DD format using our helper
+        const formattedDate = formatToYYYYMMDD(item.date);
         
         return {
           ...item,
