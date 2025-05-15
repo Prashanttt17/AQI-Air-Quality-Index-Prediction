@@ -7,9 +7,9 @@ import { toast } from '@/components/ui/use-toast';
 /**
  * Format a date value to YYYY-MM-DD string format
  */
-const formatToYYYYMMDD = (dateValue: unknown): string => {
+const formatToYYYYMMDD = (dateValue: any): string => {
   // Handle Date objects
-  if (dateValue && typeof dateValue === 'object' && 'toISOString' in dateValue && typeof dateValue.toISOString === 'function') {
+  if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
     return dateValue.toISOString().split('T')[0];
   }
   
@@ -117,6 +117,9 @@ export const generateEnhancedPredictionsAsync = async (
         };
       });
       
+      // Log formatted data for debugging
+      console.log("Formatted historical data sample:", formattedHistoricalData.slice(0, 2));
+      
       // Use the backend for predictions
       const predictions = await getPredictionsFromBackend(formattedHistoricalData, modelName);
       
@@ -134,6 +137,7 @@ export const generateEnhancedPredictionsAsync = async (
       
       // Check for the specific timestamp error from the backend
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      
       if (errorMessage.includes("Cannot compare Timestamp with datetime.date") || 
           errorMessage.toLowerCase().includes("timestamp")) {
         toast({

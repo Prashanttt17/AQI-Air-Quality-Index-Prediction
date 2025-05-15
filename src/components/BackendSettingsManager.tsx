@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { Server, Loader2, AlertTriangle } from 'lucide-react';
+import { Server, Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { getBackendSettings, saveBackendSettings, testBackendConnection } from '@/utils/backend-integration';
 
 /**
@@ -169,10 +169,10 @@ const BackendSettingsManager = () => {
               className="flex-1"
             />
             <Button 
-              variant="outline" 
+              variant={connectionStatus === 'connected' ? 'outline' : 'default'}
               onClick={() => handleTestConnection()}
               disabled={!backendEnabled || !backendUrl || isTestingConnection}
-              className={connectionStatus === 'connected' ? 'bg-green-100 dark:bg-green-900/30' : ''}
+              className={connectionStatus === 'connected' ? 'border-green-500 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50' : ''}
             >
               {isTestingConnection ? (
                 <>
@@ -180,7 +180,10 @@ const BackendSettingsManager = () => {
                   Testing...
                 </>
               ) : connectionStatus === 'connected' ? (
-                'Connected'
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Connected
+                </>
               ) : (
                 'Test Connection'
               )}
@@ -213,19 +216,33 @@ const BackendSettingsManager = () => {
           <p className="text-sm mt-3">3. Click "Test Connection" then "Save Settings"</p>
           <p className="text-sm mt-3">4. Go to dashboard, select city and view predictions</p>
         </div>
+        
+        <div className="bg-muted/50 border border-border p-4 rounded-md">
+          <h3 className="font-medium mb-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            Troubleshooting Timestamp Errors
+          </h3>
+          <p className="text-sm mb-2">If you see "Cannot compare Timestamp with datetime.date" errors:</p>
+          <ol className="list-decimal text-sm pl-5 space-y-1">
+            <li>Make sure you're using the latest code for both frontend and backend</li>
+            <li>Restart the backend server completely</li>
+            <li>Clear your browser cache or try in a private/incognito window</li>
+            <li>Verify that all dates are being sent in YYYY-MM-DD format</li>
+            <li>Check the console logs for additional error details</li>
+          </ol>
+        </div>
       </CardContent>
       
       <CardFooter className="flex flex-col space-y-4 items-stretch">
         <Button onClick={handleSaveSettings} className="w-full">Save Settings</Button>
         <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-          <p className="font-medium">Troubleshooting:</p>
+          <p className="font-medium">Additional Troubleshooting:</p>
           <ul className="list-disc pl-4 mt-1">
             <li>Ensure backend server is running (check terminal)</li>
             <li>Make sure to copy the exact URL from the terminal (http://127.0.0.1:8000)</li>
-            <li>If you see "Cannot compare Timestamp with datetime.date" errors in the backend logs, the frontend has been updated to fix this issue</li>
-            <li>For persistent timestamp comparison errors, try restarting both the backend and frontend</li>
             <li>Check that you're using Python 3.7+ for the backend</li>
             <li>Make sure all backend dependencies are installed: <code>pip install -r requirements.txt</code></li>
+            <li>If all else fails, try restarting both the backend server and your browser</li>
           </ul>
         </div>
       </CardFooter>

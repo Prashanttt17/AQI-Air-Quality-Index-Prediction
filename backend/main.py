@@ -64,6 +64,21 @@ UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs("models", exist_ok=True)
 
+# Helper function for standardizing dates
+def standardize_date_format(date_val):
+    """Convert various date formats to YYYY-MM-DD string"""
+    if isinstance(date_val, (pd.Timestamp, datetime)):
+        return date_val.strftime("%Y-%m-%d")
+    if isinstance(date_val, str):
+        try:
+            # Try to parse the date string and convert to standard format
+            return pd.to_datetime(date_val).strftime("%Y-%m-%d")
+        except:
+            # If parsing fails, return the original string
+            return date_val
+    # For any other type, convert to string and return
+    return str(date_val)
+
 # API Endpoints
 @app.get("/")
 def read_root():
@@ -92,7 +107,7 @@ async def predict_aqi(request: PredictionRequest):
         data_points = []
         for point in request.historical_data:
             data_dict = {
-                "date": point.date,
+                "date": standardize_date_format(point.date),  # Standardize date format
                 "city": point.city,
                 "aqi": point.aqi
             }
@@ -112,7 +127,7 @@ async def predict_aqi(request: PredictionRequest):
         
         # Sort by date
         if not df.empty:
-            # Convert all date strings to pandas datetime format
+            # Convert all date strings to pandas datetime format and ensure they're in consistent format
             df['date'] = pd.to_datetime(df['date'])
             df = df.sort_values('date')
         
@@ -134,15 +149,11 @@ async def predict_aqi(request: PredictionRequest):
                     nh3=float(row["nh3"])
                 )
             
-            date_value = row["date"]
-            # Ensure date is in string format YYYY-MM-DD
-            if isinstance(date_value, (pd.Timestamp, datetime)):
-                formatted_date = date_value.strftime("%Y-%m-%d")
-            else:
-                formatted_date = str(date_value)
+            # Standardize date format for output
+            date_value = standardize_date_format(row["date"])
             
             result.append(AQIDataPoint(
-                date=formatted_date,
+                date=date_value,
                 city=row["city"],
                 location=row["location"] if "location" in row else None,
                 aqi=float(row["aqi"]),
@@ -152,6 +163,7 @@ async def predict_aqi(request: PredictionRequest):
         
         return result
     except Exception as e:
+        print(f"Error in predict_aqi: {str(e)}")  # Log error for debugging
         raise HTTPException(status_code=500, detail=f"Error generating predictions: {str(e)}")
 
 @app.post("/api/predict-csv", response_model=List[AQIDataPoint])
@@ -191,15 +203,11 @@ async def predict_from_csv(
         # Convert to AQIDataPoint format
         result = []
         for _, row in predictions_df.iterrows():
-            date_value = row["date"]
-            # Ensure date is in string format YYYY-MM-DD
-            if isinstance(date_value, (pd.Timestamp, datetime)):
-                formatted_date = date_value.strftime("%Y-%m-%d")
-            else:
-                formatted_date = str(date_value)
-                
+            # Standardize date format for output
+            date_value = standardize_date_format(row["date"])
+            
             result.append(AQIDataPoint(
-                date=formatted_date,
+                date=date_value,
                 city=row["city"] if "city" in row else city,
                 aqi=float(row[target_column]),
                 predicted=bool(row["predicted"])
@@ -252,7 +260,7 @@ def generate_predictions(df: pd.DataFrame, model_name: str) -> pd.DataFrame:
     use_time_series = model_name.upper() in ["ARIMA", "SARIMAX"]
     
     # Get the latest actual data point
-    current_date = datetime.now().date()
+    current_date = pd.Timestamp(datetime.now().date())  # Use pd.Timestamp for consistency
     
     # Find the latest non-predicted data point
     actual_data = df[~df.get("predicted", False)].copy() if "predicted" in df.columns else df.copy()
@@ -267,7 +275,8 @@ def generate_predictions(df: pd.DataFrame, model_name: str) -> pd.DataFrame:
     
     try:
         # Generate 7-day forecast
-        forecast_dates = [current_date + timedelta(days=i) for i in range(7)]
+        # Use pd.Timestamp for all dates to ensure consistency
+        forecast_dates = [pd.Timestamp(current_date + timedelta(days=i)) for i in range(7)]
         
         # Use time series models for ARIMA and SARIMAX
         if use_time_series:
@@ -310,9 +319,7 @@ def generate_predictions(df: pd.DataFrame, model_name: str) -> pd.DataFrame:
             
         else:
             # For other models, use the existing simulation-based approach
-            # ... keep existing code (simulation-based prediction logic)
-            
-            # Start with today's date
+            # Start with today's date using Timestamp for consistency
             forecast_df = pd.DataFrame({
                 "date": forecast_dates,
                 "city": city,
@@ -393,9 +400,8 @@ def generate_predictions(df: pd.DataFrame, model_name: str) -> pd.DataFrame:
                 
                 forecast_df[pollutant] = pollutant_vals
         
-        # Convert date column to string format if it's not already
-        if isinstance(forecast_df["date"].iloc[0], (datetime, pd.Timestamp)):
-            forecast_df["date"] = forecast_df["date"].dt.strftime("%Y-%m-%d")
+        # Standardize date formats for consistency
+        forecast_df["date"] = forecast_df["date"].apply(standardize_date_format)
         
     except Exception as e:
         print(f"Error generating predictions: {str(e)}")
@@ -446,11 +452,15 @@ def generate_predictions_from_csv(df: pd.DataFrame, model_name: str, target_col:
         historical['predicted'] = False
         
         # Only keep historical data up to the last date to avoid overlap
-        historical = historical[historical['date'] <= last_date]
+        # Use pd.Timestamp for consistent date comparison
+        historical = historical[historical['date'] <= pd.Timestamp(last_date)]
         
         # Combine and sort
         combined = pd.concat([historical, forecast])
         combined = combined.sort_values('date')
+        
+        # Standardize date formats for consistency
+        combined["date"] = combined["date"].apply(standardize_date_format)
         
         return combined
         
@@ -494,10 +504,12 @@ def generate_predictions_from_csv(df: pd.DataFrame, model_name: str, target_col:
         combined = pd.concat([historical, forecast])
         combined = combined.sort_values('date')
         
+        # Standardize date formats for consistency
+        combined["date"] = combined["date"].apply(standardize_date_format)
+        
         return combined
 
 # Run the server with: uvicorn main:app --reload
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-

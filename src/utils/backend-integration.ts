@@ -113,9 +113,9 @@ export const fetchAQIDataFromBackend = async (
 /**
  * Format a date value to YYYY-MM-DD string format
  */
-const formatToYYYYMMDD = (dateValue: unknown): string => {
+const formatToYYYYMMDD = (dateValue: any): string => {
   // Handle Date objects
-  if (dateValue && typeof dateValue === 'object' && 'toISOString' in dateValue && typeof dateValue.toISOString === 'function') {
+  if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
     return dateValue.toISOString().split('T')[0];
   }
   
@@ -275,7 +275,7 @@ export const testBackendConnection = async (url: string): Promise<boolean> => {
         'Content-Type': 'application/json',
       },
       // Add cache control to prevent browser caching
-      cache: 'no-store',
+      cache: 'no-store' as RequestCache,
     });
     
     console.log(`Backend connection test response status: ${response.status}`);

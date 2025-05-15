@@ -6,6 +6,7 @@ import { AQIDataPoint } from '@/utils/api-service';
 import ForecastTableRow from './ForecastTableRow';
 import ForecastTableHeader from './ForecastTableHeader';
 import { getBackendSettings } from '@/utils/backend-integration';
+import { AlertCircle } from 'lucide-react';
 
 interface WeeklyPredictionTableProps {
   predictions: AQIDataPoint[];
@@ -33,14 +34,27 @@ const WeeklyPredictionTable: React.FC<WeeklyPredictionTableProps> = ({ predictio
           <ForecastTableHeader location={locationName} city={cityName || "Selected City"} />
         </CardHeader>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">
-            No prediction data available. Please ensure that:
-          </p>
-          <ul className="text-sm mt-2 list-disc text-left pl-8 space-y-1">
-            <li>The backend server is running</li>
-            <li>You've selected a city with sufficient historical data</li>
-            <li>You have proper API keys configured</li>
-          </ul>
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <AlertCircle className="h-10 w-10 text-amber-500" />
+            <p className="text-muted-foreground">
+              No prediction data available. Please ensure that:
+            </p>
+            <ul className="text-sm mt-2 list-disc text-left pl-8 space-y-1">
+              <li>The backend server is running</li>
+              <li>You've selected a city with sufficient historical data</li>
+              <li>All dates are properly formatted as YYYY-MM-DD</li>
+              <li>You have proper API keys configured</li>
+            </ul>
+            <div className="mt-4 bg-muted p-3 rounded-md text-xs text-left w-full">
+              <p className="font-medium">Troubleshooting:</p>
+              <p className="mt-1">If you're seeing "Cannot compare Timestamp with datetime.date" errors:</p>
+              <ol className="list-decimal pl-4 mt-1 space-y-1">
+                <li>Restart the backend server</li>
+                <li>Clear browser cache and reload</li>
+                <li>Make sure you have the latest code for both frontend and backend</li>
+              </ol>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
