@@ -128,10 +128,15 @@ export const getPredictionsFromBackend = async (
     console.log(`Backend URL: ${settings.url}/api/predict`);
     
     // Clean historical data to ensure it can be properly JSON serialized
+    // and format dates consistently as YYYY-MM-DD strings
     const cleanedData = historicalData.map(item => {
       const { date, city, location, aqi, pollutants } = item;
+      
+      // Ensure date is in YYYY-MM-DD format
+      const formattedDate = typeof date === 'string' ? date : new Date(date).toISOString().split('T')[0];
+      
       return { 
-        date, 
+        date: formattedDate, 
         city, 
         location, 
         aqi,
@@ -173,16 +178,39 @@ export const getPredictionsFromBackend = async (
       throw new Error(`Backend API error: ${response.status} - ${errorText}`);
     }
     
-    const predictions: AQIDataPoint[] = await response.json();
-    console.log(`Received ${predictions.length} prediction points from backend`);
+    let predictions: AQIDataPoint[] = [];
+    
+    try {
+      predictions = await response.json();
+    } catch (error) {
+      console.error('Error parsing backend response:', error);
+      throw new Error('Failed to parse backend response as JSON');
+    }
+    
+    // The backend may return an empty array or nullish value
+    if (!Array.isArray(predictions)) {
+      console.error('Backend returned invalid predictions format:', predictions);
+      throw new Error('Backend returned invalid predictions format');
+    }
+    
+    if (predictions.length === 0) {
+      console.warn('Backend returned empty predictions array');
+    } else {
+      console.log(`Received ${predictions.length} prediction points from backend`);
+      console.log("Prediction sample:", predictions.slice(0, 2));
+    }
+    
     return predictions;
   } catch (error) {
     console.error('Error getting predictions from backend:', error);
-    toast({
-      title: "Backend Error",
-      description: error instanceof Error ? error.message : "Failed to get predictions from backend",
-      variant: "destructive"
-    });
+    
+    // Check for specific backend errors and provide more helpful messages
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    if (errorMessage.includes('Cannot compare Timestamp with datetime.date')) {
+      throw new Error('Backend date format error. The backend is having trouble processing dates.');
+    }
+    
     throw error;
   }
 };

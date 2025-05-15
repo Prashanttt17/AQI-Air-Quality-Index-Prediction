@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { isBackendEnabled } from '@/utils/enhanced-predictive-models';
-import { getBackendSettings } from '@/utils/backend-integration';
+import { getBackendSettings, testBackendConnection } from '@/utils/backend-integration';
 
 type PredictionModel = 'ARIMA' | 'SARIMAX';
 
@@ -22,33 +22,41 @@ export function usePredictionModel(): UsePredictionModelReturn {
   useEffect(() => {
     const checkBackend = async () => {
       const backendEnabled = isBackendEnabled();
-      setIsBackendConnected(backendEnabled);
       
-      if (backendEnabled) {
-        try {
-          // Let's verify backend connection
-          const settings = getBackendSettings();
-          const response = await fetch(`${settings.url}/`);
-          
-          if (response.ok) {
-            console.log("Backend connection verified");
-            // Successfully connected to the backend
-            setIsBackendConnected(true);
-          } else {
-            console.error("Backend connection failed with status:", response.status);
-            setIsBackendConnected(false);
-            toast({
-              title: "Backend Connection Failed",
-              description: "Please check your backend server and settings.",
-              variant: "destructive"
-            });
-          }
-        } catch (error) {
-          console.error("Failed to connect to backend:", error);
-          setIsBackendConnected(false);
-        }
-      } else {
+      if (!backendEnabled) {
         setIsBackendConnected(false);
+        return;
+      }
+      
+      try {
+        // Let's verify backend connection
+        const settings = getBackendSettings();
+        if (!settings.url) {
+          setIsBackendConnected(false);
+          return;
+        }
+        
+        const connected = await testBackendConnection(settings.url);
+        setIsBackendConnected(connected);
+        
+        if (!connected) {
+          console.error("Backend connection failed");
+          toast({
+            title: "Backend Connection Failed",
+            description: "Please check your backend server and settings.",
+            variant: "destructive"
+          });
+        } else {
+          console.log("Backend connection verified");
+        }
+      } catch (error) {
+        console.error("Failed to connect to backend:", error);
+        setIsBackendConnected(false);
+        toast({
+          title: "Backend Connection Error",
+          description: "Could not connect to the backend server.",
+          variant: "destructive"
+        });
       }
     };
 

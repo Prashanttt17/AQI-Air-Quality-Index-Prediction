@@ -183,15 +183,16 @@ const BackendSettingsManager = () => {
         </div>
         
         <div className="bg-muted p-4 rounded-md">
-          <h3 className="font-medium mb-2">Connection Example</h3>
+          <h3 className="font-medium mb-2">Connection Steps</h3>
           <p className="text-sm mb-2">1. Start the backend server:</p>
           <pre className="bg-slate-800 text-slate-100 p-2 rounded text-xs overflow-x-auto">
             cd backend
             uvicorn main:app --reload
           </pre>
-          <p className="text-sm mt-3 mb-2">2. Enter the correct URL:</p>
+          <p className="text-sm mt-3 mb-2">2. Enter the correct URL (copy from terminal):</p>
           <code className="text-xs bg-slate-800 text-slate-100 p-1 rounded">http://127.0.0.1:8000</code>
           <p className="text-sm mt-3">3. Click "Test Connection" then "Save Settings"</p>
+          <p className="text-sm mt-3">4. Go to dashboard, select city and view predictions</p>
         </div>
       </CardContent>
       
@@ -200,10 +201,11 @@ const BackendSettingsManager = () => {
         <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
           <p className="font-medium">Troubleshooting:</p>
           <ul className="list-disc pl-4 mt-1">
-            <li>Ensure the backend server is running</li>
-            <li>Check for any CORS issues in browser console</li>
-            <li>Verify the URL is correct (http://127.0.0.1:8000)</li>
-            <li>Try restarting the backend server</li>
+            <li>Ensure backend server is running (check terminal)</li>
+            <li>Make sure to copy the exact URL from the terminal (http://127.0.0.1:8000)</li>
+            <li>Check for "Error generating predictions" in backend logs</li>
+            <li>If you see date comparison errors, ensure your data has proper date formats</li>
+            <li>Try restarting both frontend and backend if issues persist</li>
           </ul>
         </div>
       </CardFooter>

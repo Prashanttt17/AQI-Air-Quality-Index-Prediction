@@ -75,8 +75,16 @@ export const generateEnhancedPredictionsAsync = async (
       // Add console logs for debugging
       console.log("Historical data sample:", historicalData.slice(0, 2));
       
+      // Ensure dates are properly formatted before sending to backend
+      const formattedHistoricalData = historicalData.map(item => {
+        return {
+          ...item,
+          date: typeof item.date === 'string' ? item.date : new Date(item.date).toISOString().split('T')[0]
+        };
+      });
+      
       // Use the backend for predictions
-      const predictions = await getPredictionsFromBackend(historicalData, modelName);
+      const predictions = await getPredictionsFromBackend(formattedHistoricalData, modelName);
       
       if (!Array.isArray(predictions) || predictions.length === 0) {
         console.error("Backend returned empty predictions");
@@ -90,12 +98,23 @@ export const generateEnhancedPredictionsAsync = async (
     } catch (error) {
       console.error("Backend prediction failed:", error);
       
-      // Show notification with detailed error message
-      toast({
-        title: "Backend Prediction Failed",
-        description: error instanceof Error ? error.message : "Please ensure your backend server is running correctly.",
-        variant: "destructive"
-      });
+      // Check for the specific timestamp error from the backend
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (errorMessage.includes("Cannot compare Timestamp with datetime.date") || 
+          errorMessage.toLowerCase().includes("timestamp")) {
+        toast({
+          title: "Backend Date Format Error",
+          description: "The backend is having trouble with date formats. Please check the backend logs for details.",
+          variant: "destructive"
+        });
+      } else {
+        // Show notification with detailed error message
+        toast({
+          title: "Backend Prediction Failed",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
       
       // Return empty array to show no predictions
       return [];
