@@ -129,3 +129,6 @@ To extend this backend:
 2. Add support for additional data sources by:
    - Creating new fetch functions similar to `fetch_airvisual_data` and `fetch_aqicn_data`
    - Adding new endpoints or extending the `fetch_aqi_data` endpoint
+
+
+   <!-- uvicorn main:app --reload --log-level debug -->
